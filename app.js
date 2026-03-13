@@ -27,10 +27,19 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
+// 安全なJSONパース
+function safeJsonParse(str, fallback) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return fallback;
+  }
+}
+
 // 問題データ取得
 function getQuizData() {
   const saved = localStorage.getItem('keiba-quiz-questions');
-  return saved ? JSON.parse(saved) : quizData;
+  return saved ? safeJsonParse(saved, quizData) : quizData;
 }
 
 // 累計正解数の管理
@@ -59,7 +68,13 @@ function updateStartScreen() {
   const total = getTotalCorrect();
   const el = document.getElementById('player-title');
   if (el) {
-    el.innerHTML = `${title.icon} ${title.name} <span class="title-count">累計${total}問正解</span>`;
+    el.textContent = '';
+    const titleText = document.createTextNode(`${title.icon} ${title.name} `);
+    const countSpan = document.createElement('span');
+    countSpan.className = 'title-count';
+    countSpan.textContent = `累計${total}問正解`;
+    el.appendChild(titleText);
+    el.appendChild(countSpan);
   }
 }
 
@@ -127,7 +142,11 @@ function loadQuestion() {
   indices.forEach((origIdx, displayIdx) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.innerHTML = `<span class="choice-label">${labels[displayIdx]}</span>${q.choices[origIdx]}`;
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'choice-label';
+    labelSpan.textContent = labels[displayIdx];
+    btn.appendChild(labelSpan);
+    btn.appendChild(document.createTextNode(q.choices[origIdx]));
     btn.dataset.origIdx = origIdx;
     btn.onclick = () => selectAnswer(btn, origIdx, q.answer, choicesEl);
     choicesEl.appendChild(btn);
@@ -340,7 +359,7 @@ function showResult() {
   document.getElementById('final-combo').textContent = maxCombo;
 
   // 称号表示
-  document.getElementById('final-title').innerHTML = `${title.icon} ${title.name}`;
+  document.getElementById('final-title').textContent = `${title.icon} ${title.name}`;
 
   // 次の称号までの残り
   const nextTitle = TITLES.find(t => t.min > total);
@@ -408,7 +427,7 @@ function skipRanking() {
 
 function getRankings() {
   const data = localStorage.getItem('keiba-quiz-rankings');
-  return data ? JSON.parse(data) : [];
+  return data ? safeJsonParse(data, []) : [];
 }
 
 // ランキング表示
@@ -418,7 +437,10 @@ function showRanking() {
   listEl.innerHTML = '';
 
   if (rankings.length === 0) {
-    listEl.innerHTML = '<p style="text-align:center;color:#8faa8b;padding:40px 0;">まだランキングデータがありません</p>';
+    const emptyMsg = document.createElement('p');
+    emptyMsg.style.cssText = 'text-align:center;color:#8faa8b;padding:40px 0;';
+    emptyMsg.textContent = 'まだランキングデータがありません';
+    listEl.appendChild(emptyMsg);
   } else {
     rankings.slice(0, 20).forEach((r, i) => {
       const item = document.createElement('div');
@@ -428,11 +450,25 @@ function showRanking() {
       else if (i === 1) numClass = 'silver';
       else if (i === 2) numClass = 'bronze';
 
-      item.innerHTML = `
-        <div class="ranking-num ${numClass}">${i + 1}</div>
-        <div class="ranking-name">${r.title || '🐴'} ${escapeHtml(r.name)}</div>
-        <div class="ranking-score">${r.score}<span class="ranking-total">/${r.total}</span></div>
-      `;
+      const numDiv = document.createElement('div');
+      numDiv.className = `ranking-num ${numClass}`;
+      numDiv.textContent = i + 1;
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'ranking-name';
+      nameDiv.textContent = `${r.title || '🐴'} ${r.name}`;
+
+      const scoreDiv = document.createElement('div');
+      scoreDiv.className = 'ranking-score';
+      scoreDiv.textContent = r.score;
+      const totalSpan = document.createElement('span');
+      totalSpan.className = 'ranking-total';
+      totalSpan.textContent = `/${r.total}`;
+      scoreDiv.appendChild(totalSpan);
+
+      item.appendChild(numDiv);
+      item.appendChild(nameDiv);
+      item.appendChild(scoreDiv);
       listEl.appendChild(item);
     });
   }
