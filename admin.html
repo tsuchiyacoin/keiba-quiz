@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理者画面 - 競馬クイズ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #111;
+      color: #eee;
+      min-height: 100dvh;
+      padding: 16px;
+    }
+
+    /* ログイン */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+    }
+    #login-screen.hidden { display: none; }
+    .login-box {
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
+    .login-box h2 {
+      font-size: 20px;
+      margin-bottom: 24px;
+      color: #d4af37;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 13px;
+      font-size: 15px;
+      font-family: 'Noto Sans JP', sans-serif;
+      border: 2px solid #333;
+      border-radius: 10px;
+      background: #222;
+      color: #eee;
+      outline: none;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .login-box input:focus { border-color: #d4af37; }
+    .login-error {
+      color: #e74c3c;
+      font-size: 13px;
+      margin-bottom: 10px;
+      min-height: 20px;
+    }
+
+    /* 管理画面 */
+    #admin-screen { display: none; }
+    #admin-screen.active { display: block; }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .admin-header h1 {
+      font-size: 20px;
+      color: #d4af37;
+    }
+
+    /* ボタン */
+    .btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-gold { background: #d4af37; color: #111; }
+    .btn-red { background: #e74c3c; color: #fff; }
+    .btn-gray { background: #333; color: #aaa; }
+    .btn-blue { background: #3d6b4f; color: #fff; }
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+
+    /* 問題リスト */
+    .question-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+    .question-card .q-num {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .question-card .q-text {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .question-card .q-choices {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+    .question-card .q-choices .correct-choice {
+      color: #2ecc71;
+      font-weight: 700;
+    }
+    .question-card .q-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* 編集フォーム */
+    .edit-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .edit-overlay.hidden { display: none; }
+    .edit-form {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90dvh;
+      overflow-y: auto;
+    }
+    .edit-form h3 {
+      font-size: 17px;
+      margin-bottom: 16px;
+      color: #d4af37;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 11px 12px;
+      font-size: 14px;
+      font-family: 'Noto Sans JP', sans-serif;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #222;
+      color: #eee;
+      outline: none;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: #d4af37; }
+    .radio-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .radio-group label {
+      font-size: 14px;
+      color: #eee;
+      cursor: pointer;
+    }
+    .radio-group input[type="radio"] {
+      width: auto;
+      margin-right: 4px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .form-actions .btn { flex: 1; }
+
+    /* エクスポート */
+    .export-area {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #333;
+    }
+    .export-area textarea {
+      width: 100%;
+      height: 120px;
+      padding: 10px;
+      font-size: 12px;
+      font-family: monospace;
+      background: #222;
+      color: #aaa;
+      border: 1px solid #333;
+      border-radius: 8px;
+      resize: vertical;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ログイン画面 -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>管理者ログイン</h2>
+      <input type="text" id="login-id" placeholder="ID">
+      <input type="password" id="login-pw" placeholder="パスワード">
+      <p id="login-error" class="login-error"></p>
+      <button class="btn btn-gold" style="width:100%" onclick="doLogin()">ログイン</button>
+    </div>
+  </div>
+
+  <!-- 管理画面 -->
+  <div id="admin-screen">
+    <div class="admin-header">
+      <h1>問題管理</h1>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-gold btn-sm" onclick="openAddForm()">+ 追加</button>
+        <button class="btn btn-gray btn-sm" onclick="doLogout()">ログアウト</button>
+      </div>
+    </div>
+    <div id="question-list"></div>
+
+    <div class="export-area">
+      <button class="btn btn-blue btn-sm" onclick="exportData()">quiz-data.js にエクスポート</button>
+      <textarea id="export-output" readonly placeholder="エクスポートしたデータがここに表示されます"></textarea>
+    </div>
+  </div>
+
+  <!-- 編集フォーム -->
+  <div id="edit-overlay" class="edit-overlay hidden">
+    <div class="edit-form">
+      <h3 id="form-title">問題を追加</h3>
+      <input type="hidden" id="edit-index" value="-1">
+      <div class="form-group">
+        <label>問題文</label>
+        <textarea id="f-question" placeholder="問題を入力"></textarea>
+      </div>
+      <div class="form-group">
+        <label>選択肢A</label>
+        <input type="text" id="f-choice0" placeholder="選択肢A">
+      </div>
+      <div class="form-group">
+        <label>選択肢B</label>
+        <input type="text" id="f-choice1" placeholder="選択肢B">
+      </div>
+      <div class="form-group">
+        <label>選択肢C</label>
+        <input type="text" id="f-choice2" placeholder="選択肢C">
+      </div>
+      <div class="form-group">
+        <label>選択肢D</label>
+        <input type="text" id="f-choice3" placeholder="選択肢D">
+      </div>
+      <div class="form-group">
+        <label>正解</label>
+        <div class="radio-group">
+          <label><input type="radio" name="f-answer" value="0"> A</label>
+          <label><input type="radio" name="f-answer" value="1"> B</label>
+          <label><input type="radio" name="f-answer" value="2"> C</label>
+          <label><input type="radio" name="f-answer" value="3" checked> D</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>解説</label>
+        <textarea id="f-explanation" placeholder="解説を入力（任意）"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="saveQuestion()">保存</button>
+        <button class="btn btn-gray" onclick="closeForm()">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // === 認証 ===
+    const ADMIN_ID = 'admin';
+    const ADMIN_PW = 'keiba2024';
+
+    function doLogin() {
+      const id = document.getElementById('login-id').value;
+      const pw = document.getElementById('login-pw').value;
+      if (id === ADMIN_ID && pw === ADMIN_PW) {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('admin-screen').classList.add('active');
+        renderList();
+      } else {
+        document.getElementById('login-error').textContent = 'IDまたはパスワードが違います';
+      }
+    }
+
+    function doLogout() {
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('admin-screen').classList.remove('active');
+      document.getElementById('login-id').value = '';
+      document.getElementById('login-pw').value = '';
+      document.getElementById('login-error').textContent = '';
+    }
+
+    // Enterキーでログイン
+    document.getElementById('login-pw').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    // === 問題データ管理（localStorage） ===
+    function getQuestions() {
+      const data = localStorage.getItem('keiba-quiz-questions');
+      if (data) return JSON.parse(data);
+      // 初期データ
+      return [
+        { question: "日本ダービー（東京優駿）が行われる競馬場はどこ？", choices: ["中山競馬場", "阪神競馬場", "東京競馬場", "京都競馬場"], answer: 2, explanation: "日本ダービーは毎年5月末〜6月初めに東京競馬場の芝2400mで行われる。府中の直線525.9mを駆け抜ける3歳馬の頂上決戦。" },
+        { question: "史上初の無敗の三冠馬はどの馬？", choices: ["シンボリルドルフ", "ディープインパクト", "ナリタブライアン", "シンザン"], answer: 0, explanation: "シンボリルドルフは1984年に史上初の無敗で三冠を達成。「皇帝」の異名を持ち、7冠馬としても知られる。" },
+        { question: "武豊騎手が初めてダービーを勝った時の騎乗馬は？", choices: ["キングカメハメハ", "スペシャルウィーク", "アグネスフライト", "ディープインパクト"], answer: 1, explanation: "1998年、武豊はスペシャルウィークでダービー初制覇。デビューから10年目の悲願達成で、ウイニングランで涙を見せた。" },
+        { question: "有馬記念の距離は？", choices: ["2000m", "2200m", "2400m", "2500m"], answer: 3, explanation: "有馬記念は中山競馬場の芝2500mで行われる。内回りコースで小回り適性が求められ、実力馬でも取りこぼしが起きやすいレース。" },
+        { question: "「皇帝」の異名を持つ馬は？", choices: ["オグリキャップ", "テイエムオペラオー", "シンボリルドルフ", "ナリタブライアン"], answer: 2, explanation: "シンボリルドルフは無敗の三冠馬で通算G1を7勝。岡部幸雄騎手とのコンビで圧倒的な強さを見せ「皇帝」と呼ばれた。" },
+        { question: "日本の中央競馬（JRA）のG1レースで最も距離が長いのは？", choices: ["天皇賞（春）", "菊花賞", "有馬記念", "ステイヤーズステークス"], answer: 0, explanation: "天皇賞（春）は京都競馬場の芝3200mで行われるG1レース。菊花賞は3000m、有馬記念は2500m。ステイヤーズSはG2。" },
+        { question: "ディープインパクトの父馬は？", choices: ["キングカメハメハ", "サンデーサイレンス", "ブライアンズタイム", "ノーザンテースト"], answer: 1, explanation: "ディープインパクトの父はサンデーサイレンス。母ウインドインハーヘアとの配合で生まれ、日本競馬史上最高の種牡馬の一頭となった。" },
+        { question: "オグリキャップが引退レースで勝ったG1は？", choices: ["ジャパンカップ", "天皇賞（秋）", "有馬記念", "宝塚記念"], answer: 2, explanation: "1990年の有馬記念がオグリキャップのラストラン。不調が続く中、奇跡的な復活勝利を遂げ、中山競馬場は「オグリコール」に包まれた。" },
+        { question: "中央競馬で1レースの最大出走頭数は？", choices: ["16頭", "18頭", "20頭", "24頭"], answer: 1, explanation: "JRAでは1レースの最大出走頭数は18頭。ゲートの枠数が18までで、大レースでは除外馬が出ることも多い。" },
+        { question: "三冠レースに含まれないのはどれ？", choices: ["皐月賞", "日本ダービー", "有馬記念", "菊花賞"], answer: 2, explanation: "クラシック三冠は皐月賞（中山2000m）、日本ダービー（東京2400m）、菊花賞（京都3000m）の3レース。有馬記念は三冠に含まれない。" }
+      ];
+    }
+
+    function saveQuestions(questions) {
+      localStorage.setItem('keiba-quiz-questions', JSON.stringify(questions));
+    }
+
+    // === リスト描画 ===
+    function renderList() {
+      const questions = getQuestions();
+      const listEl = document.getElementById('question-list');
+      listEl.innerHTML = '';
+
+      if (questions.length === 0) {
+        listEl.innerHTML = '<p style="text-align:center;color:#888;padding:40px 0">問題がありません</p>';
+        return;
+      }
+
+      questions.forEach((q, i) => {
+        const labels = ['A', 'B', 'C', 'D'];
+        const choicesHtml = q.choices.map((c, ci) =>
+          `<span class="${ci === q.answer ? 'correct-choice' : ''}">${labels[ci]}. ${esc(c)}</span>`
+        ).join('&nbsp;&nbsp;');
+
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.innerHTML = `
+          <div class="q-num">Q${i + 1}</div>
+          <div class="q-text">${esc(q.question)}</div>
+          <div class="q-choices">${choicesHtml}</div>
+          <div class="q-actions">
+            <button class="btn btn-blue btn-sm" onclick="openEditForm(${i})">編集</button>
+            <button class="btn btn-red btn-sm" onclick="deleteQuestion(${i})">削除</button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    // === フォーム操作 ===
+    function openAddForm() {
+      document.getElementById('form-title').textContent = '問題を追加';
+      document.getElementById('edit-index').value = -1;
+      document.getElementById('f-question').value = '';
+      document.getElementById('f-choice0').value = '';
+      document.getElementById('f-choice1').value = '';
+      document.getElementById('f-choice2').value = '';
+      document.getElementById('f-choice3').value = '';
+      document.getElementById('f-explanation').value = '';
+      document.querySelector('input[name="f-answer"][value="0"]').checked = true;
+      document.getElementById('edit-overlay').classList.remove('hidden');
+    }
+
+    function openEditForm(idx) {
+      const q = getQuestions()[idx];
+      document.getElementById('form-title').textContent = '問題を編集';
+      document.getElementById('edit-index').value = idx;
+      document.getElementById('f-question').value = q.question;
+      document.getElementById('f-choice0').value = q.choices[0];
+      document.getElementById('f-choice1').value = q.choices[1];
+      document.getElementById('f-choice2').value = q.choices[2];
+      document.getElementById('f-choice3').value = q.choices[3];
+      document.getElementById('f-explanation').value = q.explanation || '';
+      document.querySelector(`input[name="f-answer"][value="${q.answer}"]`).checked = true;
+      document.getElementById('edit-overlay').classList.remove('hidden');
+    }
+
+    function closeForm() {
+      document.getElementById('edit-overlay').classList.add('hidden');
+    }
+
+    function saveQuestion() {
+      const idx = parseInt(document.getElementById('edit-index').value);
+      const question = document.getElementById('f-question').value.trim();
+      const choices = [
+        document.getElementById('f-choice0').value.trim(),
+        document.getElementById('f-choice1').value.trim(),
+        document.getElementById('f-choice2').value.trim(),
+        document.getElementById('f-choice3').value.trim()
+      ];
+      const answer = parseInt(document.querySelector('input[name="f-answer"]:checked').value);
+      const explanation = document.getElementById('f-explanation').value.trim();
+
+      if (!question || choices.some(c => !c)) {
+        alert('すべての項目を入力してください');
+        return;
+      }
+
+      const questions = getQuestions();
+      const newQ = { question, choices, answer, explanation };
+
+      if (idx === -1) {
+        questions.push(newQ);
+      } else {
+        questions[idx] = newQ;
+      }
+
+      saveQuestions(questions);
+      closeForm();
+      renderList();
+    }
+
+    function deleteQuestion(idx) {
+      if (!confirm('この問題を削除しますか？')) return;
+      const questions = getQuestions();
+      questions.splice(idx, 1);
+      saveQuestions(questions);
+      renderList();
+    }
+
+    // === エクスポート ===
+    function exportData() {
+      const questions = getQuestions();
+      const js = 'const quizData = ' + JSON.stringify(questions, null, 2) + ';\n';
+      document.getElementById('export-output').value = js;
+    }
+
+    // === ユーティリティ ===
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

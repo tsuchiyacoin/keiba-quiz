@@ -1,0 +1,594 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: #1b3a2d;
+  color: #f0ece2;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* スクリーン切り替え */
+.screen {
+  display: none;
+  min-height: 100dvh;
+  padding: 16px;
+}
+.screen.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== スタート画面 ========== */
+.start-container {
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+  padding: 0 8px;
+}
+
+.logo-area {
+  margin-bottom: 40px;
+}
+
+.logo-icon {
+  font-size: 56px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.start-container h1 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  color: #d4af37;
+}
+
+.subtitle {
+  color: #8faa8b;
+  font-size: 13px;
+}
+
+/* ========== ボタン ========== */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #c9942e, #d4af37);
+  color: #1b3a2d;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.1s, opacity 0.2s;
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  border: 2px solid #3d6b4f;
+  border-radius: 10px;
+  background: transparent;
+  color: #8faa8b;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.1s;
+}
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.btn-next {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: #3d6b4f;
+  color: #f0ece2;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: transform 0.1s;
+}
+.btn-next:active {
+  transform: scale(0.97);
+}
+
+.btn-review {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  border: 2px solid #f39c12;
+  border-radius: 10px;
+  background: transparent;
+  color: #f39c12;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.1s;
+}
+.btn-review:active {
+  transform: scale(0.97);
+}
+
+.btn-share {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: #1da1f2;
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.1s;
+}
+.btn-share:active {
+  transform: scale(0.97);
+}
+
+/* ========== クイズ画面 ========== */
+.quiz-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.quiz-header {
+  margin-bottom: 24px;
+}
+
+.progress-info {
+  text-align: center;
+  font-size: 13px;
+  color: #8faa8b;
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 3px;
+  background: #2a4f3b;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #d4af37;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.score-display {
+  text-align: right;
+  font-size: 13px;
+  color: #8faa8b;
+}
+
+.question-area {
+  background: #244535;
+  border-radius: 14px;
+  padding: 24px 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid #d4af37;
+}
+
+.question-text {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+/* ========== 選択肢 ========== */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice-btn {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  border: 2px solid #3d6b4f;
+  border-radius: 10px;
+  background: #22503a;
+  color: #f0ece2;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.choice-btn:active {
+  transform: scale(0.98);
+}
+
+.choice-btn .choice-label {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  text-align: center;
+  border-radius: 50%;
+  background: rgba(212,175,55,0.2);
+  color: #d4af37;
+  margin-right: 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.choice-btn.correct {
+  border-color: #2ecc71;
+  background: #1a4731;
+}
+
+.choice-btn.wrong {
+  border-color: #e74c3c;
+  background: #4a1a1a;
+}
+
+.choice-btn.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.choice-btn.correct .choice-label {
+  background: #2ecc71;
+  color: #fff;
+}
+
+.choice-btn.wrong .choice-label {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* ========== タイマーバー ========== */
+.timer-bar {
+  width: 100%;
+  height: 6px;
+  background: #2a4f3b;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.timer-fill {
+  height: 100%;
+  width: 100%;
+  background: #2ecc71;
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+.timer-fill.warning {
+  background: #f39c12;
+}
+
+.timer-fill.danger {
+  background: #e74c3c;
+}
+
+.timer-fill.timeup {
+  width: 0% !important;
+  background: #e74c3c;
+}
+
+/* ========== 結果メッセージ ========== */
+.result-msg {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  margin-top: 16px;
+  min-height: 28px;
+}
+
+.result-msg.correct { color: #2ecc71; }
+.result-msg.wrong { color: #e74c3c; }
+.result-msg.timeup { color: #f39c12; }
+
+/* ========== 解説 ========== */
+.explanation {
+  background: #1e3d2f;
+  border: 1px solid #3d6b4f;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b8cdb5;
+  display: none;
+}
+
+.explanation.show {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+/* ========== 結果画面 ========== */
+.result-container {
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+  padding: 0 8px;
+}
+
+.result-score-area {
+  background: #244535;
+  border-radius: 18px;
+  padding: 36px 20px;
+  margin-bottom: 20px;
+  border: 2px solid #3d6b4f;
+}
+
+.result-label {
+  font-size: 13px;
+  color: #8faa8b;
+  margin-bottom: 6px;
+}
+
+.final-score {
+  font-size: 64px;
+  font-weight: 900;
+  color: #d4af37;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.result-sub {
+  font-size: 15px;
+  color: #8faa8b;
+}
+
+.result-comment {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* ========== ランキング画面 ========== */
+.ranking-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.ranking-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  color: #d4af37;
+}
+
+.ranking-list {
+  margin-bottom: 20px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  background: #244535;
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+
+.ranking-num {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: 13px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.ranking-num.gold { background: #d4af37; color: #1b3a2d; }
+.ranking-num.silver { background: #c0c0c0; color: #1b3a2d; }
+.ranking-num.bronze { background: #cd7f32; color: #1b3a2d; }
+.ranking-num.normal { background: #2a4f3b; color: #8faa8b; }
+
+.ranking-name {
+  flex: 1;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ranking-score {
+  font-weight: 900;
+  font-size: 17px;
+  color: #d4af37;
+}
+
+/* ========== モーダル ========== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal-content {
+  background: #244535;
+  border-radius: 18px;
+  padding: 28px 20px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  border: 2px solid #3d6b4f;
+}
+
+.modal-content p {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 13px 14px;
+  font-size: 16px;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: 2px solid #3d6b4f;
+  border-radius: 10px;
+  background: #1b3a2d;
+  color: #f0ece2;
+  outline: none;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.modal-content input:focus {
+  border-color: #d4af37;
+}
+
+/* ========== アニメーション ========== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.screen.active {
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.pop {
+  animation: pop 0.25s ease;
+}
+
+/* ========== 称号（スタート画面） ========== */
+.player-title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #d4af37;
+  margin-bottom: 24px;
+  min-height: 20px;
+}
+
+.title-count {
+  color: #8faa8b;
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+/* ========== クイズ画面の統計 ========== */
+.quiz-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.combo-display {
+  font-size: 13px;
+  font-weight: 900;
+  color: #f39c12;
+  background: rgba(243,156,18,0.15);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ========== コンボラベル ========== */
+.combo-label {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+  min-height: 30px;
+  margin-top: 8px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.combo-label.show {
+  opacity: 1;
+  transform: scale(1);
+  color: #f39c12;
+  animation: comboAppear 0.4s ease;
+}
+
+.combo-label.rainbow {
+  background: linear-gradient(90deg, #e74c3c, #f39c12, #f1c40f, #2ecc71, #3498db, #9b59b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: comboAppear 0.4s ease, rainbowShift 1s linear infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes comboAppear {
+  0% { opacity: 0; transform: scale(2); }
+  60% { opacity: 1; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes rainbowShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ========== 結果画面の称号 ========== */
+.result-combo {
+  font-size: 14px;
+  color: #f39c12;
+  margin-top: 10px;
+}
+
+.final-title {
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 4px;
+  color: #d4af37;
+}
+
+.next-title-info {
+  font-size: 12px;
+  color: #8faa8b;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* ========== ランキングの称号 ========== */
+.ranking-total {
+  font-size: 12px;
+  color: #8faa8b;
+  font-weight: 400;
+}

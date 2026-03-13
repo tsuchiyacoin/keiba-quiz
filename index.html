@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>競馬クイズ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- スタート画面 -->
+  <div id="start-screen" class="screen active">
+    <div class="start-container">
+      <div class="logo-area">
+        <span class="logo-icon">🏇</span>
+        <h1>競馬クイズ</h1>
+        <p class="subtitle">あなたの競馬知識を試そう</p>
+      </div>
+      <div id="player-title" class="player-title"></div>
+      <button class="btn-primary" onclick="startQuiz()">スタート</button>
+      <button class="btn-secondary" onclick="showRanking()">ランキング</button>
+    </div>
+  </div>
+
+  <!-- クイズ画面 -->
+  <div id="quiz-screen" class="screen">
+    <div class="quiz-container">
+      <div class="quiz-header">
+        <div class="progress-info">
+          <span id="question-num">1</span> / <span id="total-num">10</span>
+        </div>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <div class="quiz-stats">
+          <div class="score-display">スコア: <span id="current-score">0</span></div>
+          <div id="combo-display" class="combo-display" style="display:none;">0 COMBO</div>
+        </div>
+      </div>
+      <div class="timer-bar">
+        <div id="timer-fill" class="timer-fill"></div>
+      </div>
+      <div class="question-area">
+        <p id="question-text" class="question-text"></p>
+      </div>
+      <div id="choices" class="choices"></div>
+      <div id="combo-label" class="combo-label"></div>
+      <div id="result-msg" class="result-msg"></div>
+      <div id="explanation" class="explanation"></div>
+      <button id="next-btn" class="btn-next" onclick="nextQuestion()" style="display:none;">次の問題</button>
+    </div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result-screen" class="screen">
+    <div class="result-container">
+      <div class="result-score-area">
+        <p class="result-label">あなたのスコア</p>
+        <p id="final-score" class="final-score">0</p>
+        <p class="result-sub">/ <span id="final-total">10</span>問中</p>
+        <div class="result-combo">最大コンボ: <span id="final-combo">0</span></div>
+      </div>
+      <div id="final-title" class="final-title"></div>
+      <div id="next-title-info" class="next-title-info"></div>
+      <div id="result-comment" class="result-comment"></div>
+      <div class="result-actions">
+        <button class="btn-primary" onclick="retryQuiz()">もう一回</button>
+        <button id="review-btn" class="btn-review" onclick="startReview()" style="display:none;">復習する</button>
+        <button class="btn-secondary" onclick="showRanking()">ランキング</button>
+        <button class="btn-share" onclick="shareResult()">結果をシェア</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ランキング画面 -->
+  <div id="ranking-screen" class="screen">
+    <div class="ranking-container">
+      <h2 class="ranking-title">ランキング</h2>
+      <div id="ranking-list" class="ranking-list"></div>
+      <button class="btn-secondary" onclick="backToStart()">戻る</button>
+    </div>
+  </div>
+
+  <!-- 名前入力モーダル -->
+  <div id="name-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <p>ランキングに登録するニックネームを入力</p>
+      <input type="text" id="nickname-input" maxlength="10" placeholder="ニックネーム">
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="submitScore()">登録</button>
+        <button class="btn-secondary" onclick="skipRanking()">スキップ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="quiz-data.js"></script>
+  <script src="sounds.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
