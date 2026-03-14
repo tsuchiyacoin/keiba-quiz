@@ -1,14 +1,27 @@
 // Web Audio APIで効果音を生成（ファイル不要）
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      return null;
+    }
+  }
+  return audioCtx;
+}
 
 function playSound(type) {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const now = audioCtx.currentTime;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const now = ctx.currentTime;
 
   if (type === 'correct') {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(523, now);
     osc.frequency.linearRampToValueAtTime(784, now + 0.1);
@@ -19,9 +32,9 @@ function playSound(type) {
   }
 
   if (type === 'wrong') {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'square';
     osc.frequency.setValueAtTime(150, now);
     osc.frequency.linearRampToValueAtTime(100, now + 0.2);
@@ -32,9 +45,9 @@ function playSound(type) {
 
   if (type === 'combo') {
     [523, 659, 784, 1047].forEach((freq, i) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.06);
       gain.gain.setValueAtTime(0.2, now + i * 0.06);
@@ -44,9 +57,9 @@ function playSound(type) {
   }
 
   if (type === 'timeup') {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(400, now);
     osc.frequency.linearRampToValueAtTime(100, now + 0.4);
@@ -57,9 +70,9 @@ function playSound(type) {
 
   if (type === 'result') {
     [523, 659, 784, 1047, 784, 1047].forEach((freq, i) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.12);
       gain.gain.setValueAtTime(0.25, now + i * 0.12);
@@ -69,9 +82,9 @@ function playSound(type) {
   }
 
   if (type === 'tick') {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, now);
     gain.gain.setValueAtTime(0.15, now);
@@ -81,9 +94,9 @@ function playSound(type) {
 
   if (type === 'levelup') {
     [523, 659, 784, 1047, 1319, 1568].forEach((freq, i) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.08);
       gain.gain.setValueAtTime(0.25, now + i * 0.08);
@@ -93,22 +106,20 @@ function playSound(type) {
   }
 
   if (type === 'gacha') {
-    // ドラムロール
     for (let i = 0; i < 12; i++) {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(200 + i * 30, now + i * 0.06);
       gain.gain.setValueAtTime(0.1, now + i * 0.06);
       gain.gain.linearRampToValueAtTime(0, now + i * 0.06 + 0.08);
       osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.08);
     }
-    // ファンファーレ (カードがめくれるタイミング)
     [784, 988, 1175, 1568].forEach((freq, i) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + 0.9 + i * 0.1);
       gain.gain.setValueAtTime(0.3, now + 0.9 + i * 0.1);
@@ -118,11 +129,10 @@ function playSound(type) {
   }
 
   if (type === 'bonus') {
-    // キラキラ音
     [1047, 1319, 1568, 1319, 1568, 2093].forEach((freq, i) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.05);
       gain.gain.setValueAtTime(0.15, now + i * 0.05);
