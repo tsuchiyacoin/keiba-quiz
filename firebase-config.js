@@ -1,24 +1,20 @@
 // Firebase設定
-// ※ここにFirebaseコンソールからコピーした設定を貼り付けてください
-// https://console.firebase.google.com/ でプロジェクト作成後、
-// プロジェクト設定 > 全般 > マイアプリ > ウェブアプリ追加 で取得できます
-
 var firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDe75sAy_AMiG2GKAFs9RNndWtQ7fU9klQ",
+  authDomain: "keibahannnou.firebaseapp.com",
+  projectId: "keibahannnou",
+  storageBucket: "keibahannnou.firebasestorage.app",
+  messagingSenderId: "17262593376",
+  appId: "1:17262593376:web:e0eb245ed2b82bc2064a05"
 };
 
 // Firebase初期化
 var db = null;
 try {
-  if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== 'YOUR_API_KEY') {
+  if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
   }
 } catch (e) {
-  console.log('Firebase初期化スキップ:', e.message);
+  console.log('Firebase初期化:', e.message);
 }
