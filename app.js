@@ -1366,11 +1366,20 @@ function initEvents() {
 // ============================================================
 // 初期化
 // ============================================================
-try {
-  initEvents();
-  checkStreak();
-  updateStartScreen();
-  checkBattleFromUrl();
-} catch (e) {
-  console.error('初期化エラー:', e);
+function init() {
+  try {
+    initEvents();
+    checkStreak();
+    updateStartScreen();
+    checkBattleFromUrl();
+  } catch (e) {
+    console.error('初期化エラー:', e);
+  }
+}
+
+// DOMが確実に準備できてから初期化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
 }
