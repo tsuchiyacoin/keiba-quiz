@@ -1388,7 +1388,9 @@ function switchMainTab(tabName) {
   document.getElementById('tab-' + tabName + '-content').classList.add('active');
 
   if (tabName === 'board') {
+    updateBoardUserInfo();
     loadThreadList();
+    checkDailyThread();
   }
 }
 
@@ -1397,11 +1399,109 @@ function switchMainTab(tabName) {
 // ============================================================
 var threadLastDoc = null;
 var currentThreadId = null;
+var currentThreadData = null;
 var replyLastDoc = null;
+var replyAnchorNum = null;
+var replyUnsubscribe = null;
+var replyNumCounter = 0;
 
+// --- 7. 掲示板称号 ---
+var BOARD_TITLES = [
+  { min: 0, name: 'ROM専', icon: '👀' },
+  { min: 3, name: '新参者', icon: '🐣' },
+  { min: 10, name: '常連', icon: '☕' },
+  { min: 30, name: 'ご意見番', icon: '📢' },
+  { min: 50, name: '掲示板の主', icon: '👑' },
+  { min: 100, name: '伝説の住人', icon: '🔥' },
+];
+
+function getBoardPostCount() {
+  return parseInt(localStorage.getItem('keiba-board-posts') || '0');
+}
+
+function incrementBoardPostCount() {
+  var count = getBoardPostCount() + 1;
+  localStorage.setItem('keiba-board-posts', '' + count);
+  return count;
+}
+
+function getBoardTitle() {
+  var count = getBoardPostCount();
+  var title = BOARD_TITLES[0];
+  for (var i = 0; i < BOARD_TITLES.length; i++) {
+    if (count >= BOARD_TITLES[i].min) title = BOARD_TITLES[i];
+  }
+  return title;
+}
+
+function updateBoardUserInfo() {
+  var el = document.getElementById('board-user-info');
+  if (!el) return;
+  var p = getPlayerData();
+  var bt = getBoardTitle();
+  var postCount = getBoardPostCount();
+  el.innerHTML = '<span class="board-user-level">Lv.' + p.level + '</span>' +
+    '<span class="board-user-title">' + bt.icon + ' ' + bt.name + '</span>' +
+    '<span class="board-post-count">投稿数: ' + postCount + '</span>';
+}
+
+// --- ユーティリティ ---
 function formatDate(ts) {
   var date = ts ? ts.toDate() : new Date();
   return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+}
+
+function getTodayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+// --- 4. 新着バッジ ---
+function getThreadVisits() {
+  return safeJsonParse(localStorage.getItem('keiba-thread-visits'), {});
+}
+
+function markThreadVisited(threadId, replyCount) {
+  var visits = getThreadVisits();
+  visits[threadId] = replyCount || 0;
+  localStorage.setItem('keiba-thread-visits', JSON.stringify(visits));
+}
+
+function hasNewReplies(threadId, replyCount) {
+  var visits = getThreadVisits();
+  if (typeof visits[threadId] === 'undefined') return true;
+  return (replyCount || 0) > visits[threadId];
+}
+
+// --- 1. いいね ---
+function getLikedReplies() {
+  return safeJsonParse(localStorage.getItem('keiba-liked-replies'), []);
+}
+
+function isReplyLiked(replyId) {
+  var liked = getLikedReplies();
+  return liked.indexOf(replyId) >= 0;
+}
+
+function toggleLike(replyId) {
+  var liked = getLikedReplies();
+  var idx = liked.indexOf(replyId);
+  var isLike;
+  if (idx >= 0) {
+    liked.splice(idx, 1);
+    isLike = false;
+  } else {
+    liked.push(replyId);
+    isLike = true;
+  }
+  localStorage.setItem('keiba-liked-replies', JSON.stringify(liked));
+
+  if (db && currentThreadId) {
+    db.collection('threads').doc(currentThreadId).collection('replies').doc(replyId).update({
+      likes: firebase.firestore.FieldValue.increment(isLike ? 1 : -1)
+    }).catch(function(err) { console.error('いいねエラー:', err); });
+  }
+  return isLike;
 }
 
 // --- スレッド一覧 ---
@@ -1439,11 +1539,26 @@ function loadThreads() {
 
       var item = document.createElement('div');
       item.className = 'thread-item';
-      item.setAttribute('data-id', doc.id);
 
-      var title = document.createElement('div');
-      title.className = 'thread-item-title';
-      title.textContent = data.title || '無題';
+      var titleRow = document.createElement('div');
+      titleRow.className = 'thread-item-title';
+      titleRow.textContent = data.title || '無題';
+
+      // デイリースレッドバッジ
+      if (data.isDaily) {
+        var dailyBadge = document.createElement('span');
+        dailyBadge.className = 'daily-thread-badge';
+        dailyBadge.textContent = '今日の話題';
+        titleRow.appendChild(dailyBadge);
+      }
+
+      // 4. NEWバッジ
+      if (hasNewReplies(doc.id, data.replyCount)) {
+        var newBadge = document.createElement('span');
+        newBadge.className = 'new-badge';
+        newBadge.textContent = 'NEW';
+        titleRow.appendChild(newBadge);
+      }
 
       var meta = document.createElement('div');
       meta.className = 'thread-item-meta';
@@ -1458,7 +1573,7 @@ function loadThreads() {
       meta.appendChild(info);
       meta.appendChild(replies);
 
-      item.appendChild(title);
+      item.appendChild(titleRow);
       item.appendChild(meta);
       el.appendChild(item);
 
@@ -1519,6 +1634,8 @@ function createThread() {
     if (titleEl) titleEl.value = '';
     if (bodyEl) bodyEl.value = '';
     if (btn) btn.disabled = false;
+    incrementBoardPostCount();
+    updateBoardUserInfo();
     hideNewThreadModal();
     loadThreadList();
   }).catch(function(err) {
@@ -1530,7 +1647,13 @@ function createThread() {
 // --- スレッド詳細 ---
 function openThread(threadId, data) {
   currentThreadId = threadId;
+  currentThreadData = data;
   replyLastDoc = null;
+  replyAnchorNum = null;
+  replyNumCounter = 0;
+
+  // 4. 既読マーク
+  markThreadVisited(threadId, data.replyCount);
 
   var headerEl = document.getElementById('thread-header');
   if (headerEl) {
@@ -1552,71 +1675,184 @@ function openThread(threadId, data) {
     headerEl.appendChild(meta);
   }
 
+  // アンカープレビューリセット
+  clearAnchor();
+
   var repliesEl = document.getElementById('thread-replies');
   if (repliesEl) repliesEl.innerHTML = '';
 
-  loadReplies();
+  // 6. リアルタイム更新
+  startRealtimeReplies();
+
   showScreen('thread-screen');
 }
 
-function loadReplies() {
+// --- 6. リアルタイム更新 ---
+function startRealtimeReplies() {
+  // 前のリスナー解除
+  if (replyUnsubscribe) {
+    replyUnsubscribe();
+    replyUnsubscribe = null;
+  }
   if (!db || !currentThreadId) return;
 
-  var query = db.collection('threads').doc(currentThreadId)
-    .collection('replies').orderBy('createdAt', 'asc').limit(50);
-  if (replyLastDoc) query = query.startAfter(replyLastDoc);
+  replyNumCounter = 0;
+  var el = document.getElementById('thread-replies');
+  if (el) el.innerHTML = '';
 
-  query.get().then(function(snapshot) {
-    var el = document.getElementById('thread-replies');
-    if (!el) return;
+  replyUnsubscribe = db.collection('threads').doc(currentThreadId)
+    .collection('replies').orderBy('createdAt', 'asc').limit(200)
+    .onSnapshot(function(snapshot) {
+      var el = document.getElementById('thread-replies');
+      if (!el) return;
+      el.innerHTML = '';
+      replyNumCounter = 0;
 
-    if (snapshot.empty && !replyLastDoc) {
-      el.innerHTML = '<p class="board-empty">まだ返信がありません</p>';
-    }
+      if (snapshot.empty) {
+        el.innerHTML = '<p class="board-empty">まだ返信がありません</p>';
+        return;
+      }
 
-    snapshot.forEach(function(doc) {
-      var data = doc.data();
-      replyLastDoc = doc;
-
-      // 最初に「まだ返信がありません」があれば消す
-      var emptyMsg = el.querySelector('.board-empty');
-      if (emptyMsg) emptyMsg.remove();
-
-      var item = document.createElement('div');
-      item.className = 'board-post-item';
-
-      var header = document.createElement('div');
-      header.className = 'board-post-header';
-
-      var nameEl = document.createElement('span');
-      nameEl.className = 'board-post-name';
-      nameEl.textContent = data.name || '名無し';
-
-      var dateEl = document.createElement('span');
-      dateEl.className = 'board-post-date';
-      dateEl.textContent = formatDate(data.createdAt);
-
-      header.appendChild(nameEl);
-      header.appendChild(dateEl);
-
-      var body = document.createElement('div');
-      body.className = 'board-post-body';
-      body.textContent = data.message || '';
-
-      item.appendChild(header);
-      item.appendChild(body);
-      el.appendChild(item);
+      snapshot.forEach(function(doc) {
+        var data = doc.data();
+        replyNumCounter++;
+        renderReplyItem(el, doc.id, data, replyNumCounter);
+      });
+    }, function(err) {
+      console.error('リアルタイムエラー:', err);
     });
-
-    var loadMore = document.getElementById('reply-load-more');
-    if (loadMore) {
-      loadMore.style.display = snapshot.size >= 50 ? 'block' : 'none';
-    }
-  }).catch(function(err) {
-    console.error('返信読み込みエラー:', err);
-  });
 }
 
+function stopRealtimeReplies() {
+  if (replyUnsubscribe) {
+    replyUnsubscribe();
+    replyUnsubscribe = null;
+  }
+}
+
+// --- 返信レンダリング（いいね + アンカー + レベル表示） ---
+function renderReplyItem(container, docId, data, num) {
+  var item = document.createElement('div');
+  item.className = 'board-post-item';
+  item.id = 'reply-' + num;
+
+  var header = document.createElement('div');
+  header.className = 'board-post-header';
+
+  var leftSide = document.createElement('span');
+
+  // 2. 返信番号
+  var numSpan = document.createElement('span');
+  numSpan.className = 'reply-num';
+  numSpan.textContent = '>>' + num;
+  leftSide.appendChild(numSpan);
+
+  // 名前
+  var nameEl = document.createElement('span');
+  nameEl.className = 'board-post-name';
+  nameEl.textContent = data.name || '名無し';
+  leftSide.appendChild(nameEl);
+
+  // 3. 投稿者レベル表示
+  if (data.level) {
+    var lvBadge = document.createElement('span');
+    lvBadge.className = 'poster-level';
+    lvBadge.textContent = 'Lv.' + data.level;
+    leftSide.appendChild(lvBadge);
+  }
+
+  var rightSide = document.createElement('span');
+
+  var dateEl = document.createElement('span');
+  dateEl.className = 'board-post-date';
+  dateEl.textContent = formatDate(data.createdAt);
+  rightSide.appendChild(dateEl);
+
+  // 2. 返信ボタン
+  var anchorBtn = document.createElement('button');
+  anchorBtn.className = 'reply-btn-anchor';
+  anchorBtn.textContent = '返信';
+  anchorBtn.addEventListener('click', function() {
+    setAnchor(num, data.name);
+  });
+  rightSide.appendChild(anchorBtn);
+
+  header.appendChild(leftSide);
+  header.appendChild(rightSide);
+
+  // 2. アンカー先表示
+  if (data.replyTo) {
+    var anchorLine = document.createElement('div');
+    anchorLine.className = 'reply-anchor-line';
+    var aLink = document.createElement('span');
+    aLink.className = 'reply-anchor';
+    aLink.textContent = '>>' + data.replyTo;
+    aLink.addEventListener('click', function() {
+      var target = document.getElementById('reply-' + data.replyTo);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    anchorLine.appendChild(aLink);
+    item.appendChild(header);
+    item.appendChild(anchorLine);
+  } else {
+    item.appendChild(header);
+  }
+
+  var body = document.createElement('div');
+  body.className = 'board-post-body';
+  body.textContent = data.message || '';
+  item.appendChild(body);
+
+  // 1. いいねボタン
+  var likeBtn = document.createElement('button');
+  likeBtn.className = 'like-btn' + (isReplyLiked(docId) ? ' liked' : '');
+  var likeCount = data.likes || 0;
+  likeBtn.innerHTML = (isReplyLiked(docId) ? '❤️' : '🤍') + ' <span class="like-count">' + likeCount + '</span>';
+  likeBtn.addEventListener('click', function() {
+    var isLike = toggleLike(docId);
+    var countEl = likeBtn.querySelector('.like-count');
+    var currentCount = parseInt(countEl.textContent);
+    countEl.textContent = isLike ? currentCount + 1 : Math.max(0, currentCount - 1);
+    likeBtn.className = 'like-btn' + (isLike ? ' liked' : '');
+    likeBtn.innerHTML = (isLike ? '❤️' : '🤍') + ' <span class="like-count">' + countEl.textContent + '</span>';
+  });
+  item.appendChild(likeBtn);
+
+  container.appendChild(item);
+}
+
+// --- 2. アンカー返信 ---
+function setAnchor(num, name) {
+  replyAnchorNum = num;
+  var preview = document.getElementById('reply-anchor-preview');
+  if (preview) {
+    preview.style.display = 'flex';
+    preview.innerHTML = '>>' + num + ' ' + escapeHtml(name) + 'に返信 <button class="anchor-clear" id="anchor-clear-btn">×</button>';
+    var clearBtn = document.getElementById('anchor-clear-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function() { clearAnchor(); });
+    }
+  }
+  var msgEl = document.getElementById('reply-message');
+  if (msgEl) msgEl.focus();
+}
+
+function clearAnchor() {
+  replyAnchorNum = null;
+  var preview = document.getElementById('reply-anchor-preview');
+  if (preview) {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+  }
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// --- 投稿 ---
 function postReply() {
   if (!db || !currentThreadId) { alert('掲示板は現在準備中です'); return; }
 
@@ -1631,13 +1867,19 @@ function postReply() {
   var btn = document.getElementById('reply-post-btn');
   if (btn) btn.disabled = true;
 
-  var batch = db.batch();
-  var replyRef = db.collection('threads').doc(currentThreadId).collection('replies').doc();
-  batch.set(replyRef, {
+  var p = getPlayerData();
+  var replyData = {
     name: name,
     message: message,
+    level: p.level,
+    likes: 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
+  if (replyAnchorNum) replyData.replyTo = replyAnchorNum;
+
+  var batch = db.batch();
+  var replyRef = db.collection('threads').doc(currentThreadId).collection('replies').doc();
+  batch.set(replyRef, replyData);
 
   var threadRef = db.collection('threads').doc(currentThreadId);
   batch.update(threadRef, {
@@ -1648,18 +1890,62 @@ function postReply() {
   batch.commit().then(function() {
     if (msgEl) msgEl.value = '';
     if (btn) btn.disabled = false;
-    replyLastDoc = null;
-    var el = document.getElementById('thread-replies');
-    if (el) el.innerHTML = '';
-    loadReplies();
+    clearAnchor();
+    incrementBoardPostCount();
+    updateBoardUserInfo();
+    // リアルタイム更新で自動反映される
   }).catch(function(err) {
     if (btn) btn.disabled = false;
     alert('投稿に失敗しました: ' + err.message);
   });
 }
 
+// --- 8. デイリースレッド自動生成 ---
+var DAILY_TOPICS = [
+  '今日のレース予想を語ろう！',
+  '最近気になる馬は？',
+  '今週の重賞レースについて語ろう',
+  '推し騎手を教えて！',
+  '競馬で一番嬉しかった思い出は？',
+  '穴馬を見つけるコツは？',
+  '今日の競馬ニュースについて',
+];
+
+function checkDailyThread() {
+  if (!db) return;
+  var today = getTodayStr();
+  var checked = localStorage.getItem('keiba-daily-thread-checked');
+  if (checked === today) return;
+
+  db.collection('threads').where('dailyDate', '==', today).limit(1).get().then(function(snapshot) {
+    localStorage.setItem('keiba-daily-thread-checked', today);
+    if (!snapshot.empty) return;
+
+    // 今日のスレッドがないので作成
+    var topicIdx = new Date().getDate() % DAILY_TOPICS.length;
+    var topic = DAILY_TOPICS[topicIdx];
+    var now = firebase.firestore.FieldValue.serverTimestamp();
+    db.collection('threads').add({
+      title: '📅 ' + topic,
+      name: '競馬クイズBot',
+      body: '今日のデイリートピックです！気軽に書き込んでください。',
+      isDaily: true,
+      dailyDate: today,
+      createdAt: now,
+      lastReplyAt: now,
+      replyCount: 0
+    }).then(function() {
+      loadThreadList();
+    });
+  }).catch(function(err) {
+    console.error('デイリースレッドエラー:', err);
+  });
+}
+
 function backFromThread() {
+  stopRealtimeReplies();
   currentThreadId = null;
+  currentThreadData = null;
   showScreen('start-screen');
   switchMainTab('board');
 }
