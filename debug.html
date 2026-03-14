@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>デバッグ</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #0f0; padding: 16px; font-size: 14px; }
+    #log { white-space: pre-wrap; word-break: break-all; }
+    button { padding: 16px; font-size: 18px; margin: 8px 0; display: block; width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>デバッグページ</h2>
+  <div id="log"></div>
+
+  <button id="test-btn">テストボタン（これが押せるか確認）</button>
+
+  <script>
+    var logEl = document.getElementById('log');
+    function log(msg) {
+      logEl.textContent += msg + '\n';
+    }
+
+    // テストボタン
+    document.getElementById('test-btn').addEventListener('click', function() {
+      log('✅ テストボタン押せた！addEventListener動作OK');
+    });
+
+    log('=== チェック開始 ===');
+
+    // 1. quiz-data.js
+    try {
+      var s1 = document.createElement('script');
+      s1.src = 'quiz-data.js';
+      s1.onload = function() {
+        log('✅ quiz-data.js 読み込み成功');
+        if (typeof quizData !== 'undefined') {
+          log('✅ quizData 定義あり (' + quizData.length + '問)');
+        } else {
+          log('❌ quizData 未定義');
+        }
+
+        // 2. sounds.js
+        var s2 = document.createElement('script');
+        s2.src = 'sounds.js';
+        s2.onload = function() {
+          log('✅ sounds.js 読み込み成功');
+          if (typeof playSound === 'function') {
+            log('✅ playSound 関数あり');
+          } else {
+            log('❌ playSound 未定義');
+          }
+          if (typeof vibrate === 'function') {
+            log('✅ vibrate 関数あり');
+          } else {
+            log('❌ vibrate 未定義');
+          }
+
+          // 3. app.js
+          var s3 = document.createElement('script');
+          s3.src = 'app.js';
+          s3.onload = function() {
+            log('✅ app.js 読み込み成功');
+            var funcs = ['startQuiz','startDailyChallenge','startBattle','nextQuestion','showRanking','showStatsScreen','backToStart','submitScore','skipRanking','retryQuiz','shareResult','closeGacha','initEvents'];
+            funcs.forEach(function(name) {
+              if (typeof window[name] === 'function') {
+                log('✅ ' + name + ' 定義あり');
+              } else {
+                log('❌ ' + name + ' 未定義');
+              }
+            });
+
+            // ボタン確認
+            var ids = ['start-btn','daily-btn','battle-btn','next-btn','retry-btn','ranking-btn','stats-btn'];
+            ids.forEach(function(id) {
+              var el = document.getElementById(id);
+              log(el ? ('✅ #' + id + ' 存在') : ('❌ #' + id + ' 見つからない'));
+            });
+
+            log('=== チェック完了 ===');
+          };
+          s3.onerror = function(e) { log('❌ app.js 読み込みエラー: ' + e); };
+          document.body.appendChild(s3);
+        };
+        s2.onerror = function(e) { log('❌ sounds.js 読み込みエラー: ' + e); };
+        document.body.appendChild(s2);
+      };
+      s1.onerror = function(e) { log('❌ quiz-data.js 読み込みエラー: ' + e); };
+      document.body.appendChild(s1);
+    } catch(e) {
+      log('❌ エラー: ' + e.message);
+    }
+
+    // グローバルエラーキャッチ
+    window.onerror = function(msg, url, line, col, err) {
+      log('❌ グローバルエラー: ' + msg + ' (' + url + ':' + line + ')');
+    };
+  </script>
+</body>
+</html>
