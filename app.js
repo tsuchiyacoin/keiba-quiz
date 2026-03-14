@@ -1679,7 +1679,11 @@ function openThread(threadId, data) {
   clearAnchor();
 
   var repliesEl = document.getElementById('thread-replies');
-  if (repliesEl) repliesEl.innerHTML = '';
+  if (repliesEl) repliesEl.innerHTML = '<p class="board-empty">読み込み中...</p>';
+
+  // 返信フォームは読み込み後に表示
+  var replyForm = document.querySelector('#thread-screen .board-post-form');
+  if (replyForm) replyForm.style.display = 'none';
 
   // 6. リアルタイム更新
   startRealtimeReplies();
@@ -1707,6 +1711,10 @@ function startRealtimeReplies() {
       if (!el) return;
       el.innerHTML = '';
       replyNumCounter = 0;
+
+      // 返信フォームを表示
+      var replyForm = document.querySelector('#thread-screen .board-post-form');
+      if (replyForm) replyForm.style.display = 'block';
 
       if (snapshot.empty) {
         el.innerHTML = '<p class="board-empty">まだ返信がありません</p>';
