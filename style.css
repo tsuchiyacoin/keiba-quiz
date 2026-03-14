@@ -93,16 +93,19 @@ body {
 }
 
 .btn-next {
+  position: fixed;
+  bottom: 0;
+  left: 0;
   width: 100%;
-  padding: 15px;
-  font-size: 16px;
+  padding: 18px;
+  font-size: 18px;
   font-weight: 700;
   border: none;
-  border-radius: 10px;
-  background: #3d6b4f;
-  color: #f0ece2;
+  border-radius: 0;
+  background: #d4af37;
+  color: #1b3a2d;
   cursor: pointer;
-  margin-top: 14px;
+  z-index: 50;
   transition: transform 0.1s;
 }
 .btn-next:active {

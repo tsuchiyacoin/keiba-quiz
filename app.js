@@ -225,7 +225,9 @@ function onTimeUp() {
   playSound('timeup');
   vibrate(200);
   showExplanation(q);
-  document.getElementById('next-btn').style.display = 'block';
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'block';
+  setTimeout(() => nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
 }
 
 // 回答選択
@@ -301,7 +303,9 @@ function selectAnswer(btn, selected, correct, container) {
   }, 300);
 
   showExplanation(q);
-  document.getElementById('next-btn').style.display = 'block';
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'block';
+  setTimeout(() => nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
 }
 
 // コンボ表示更新
