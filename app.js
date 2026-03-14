@@ -56,7 +56,11 @@ const DIFFICULTY_SETTINGS = {
 // ユーティリティ
 // ============================================================
 function safeJsonParse(str, fallback) {
-  try { return JSON.parse(str); } catch (e) { return fallback; }
+  if (!str) return fallback;
+  try {
+    var result = JSON.parse(str);
+    return (result !== null && result !== undefined) ? result : fallback;
+  } catch (e) { return fallback; }
 }
 
 function showScreen(id) {
