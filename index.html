@@ -18,9 +18,63 @@
         <h1>競馬クイズ</h1>
         <p class="subtitle">あなたの競馬知識を試そう</p>
       </div>
+
+      <!-- レベル & XP -->
+      <div class="xp-bar-container">
+        <div class="xp-level">Lv.<span id="player-level">1</span></div>
+        <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
+        <div id="xp-text" class="xp-text">0 / 100 XP</div>
+      </div>
+
       <div id="player-title" class="player-title"></div>
+      <div id="streak-display" class="streak-display" style="display:none;"></div>
+
+      <!-- メインボタン -->
       <button class="btn-primary" onclick="startQuiz()">スタート</button>
-      <button class="btn-secondary" onclick="showRanking()">ランキング</button>
+      <button id="daily-btn" class="btn-daily" onclick="startDailyChallenge()">📅 デイリーチャレンジ</button>
+      <button class="btn-battle" onclick="startBattle()">⚔️ 友達と対戦</button>
+
+      <!-- 設定パネル -->
+      <details class="settings-panel">
+        <summary>設定</summary>
+        <div class="settings-content">
+          <div class="setting-group">
+            <label class="setting-label">ジャンル</label>
+            <div class="genre-checks">
+              <label><input type="checkbox" class="genre-check" value="general"> 総合</label>
+              <label><input type="checkbox" class="genre-check" value="g1"> G1レース</label>
+              <label><input type="checkbox" class="genre-check" value="bloodline"> 血統</label>
+              <label><input type="checkbox" class="genre-check" value="jockey"> 騎手</label>
+              <label><input type="checkbox" class="genre-check" value="history"> 歴史</label>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">難易度</label>
+            <div class="diff-radios">
+              <label><input type="radio" name="difficulty" value="all" checked> 全て</label>
+              <label><input type="radio" name="difficulty" value="beginner"> 初級</label>
+              <label><input type="radio" name="difficulty" value="intermediate"> 中級</label>
+              <label><input type="radio" name="difficulty" value="advanced"> 上級</label>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">ハードモード (制限時間8秒)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="hard-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <!-- セカンダリボタン -->
+      <div class="secondary-actions">
+        <button id="wrong-bank-btn" class="btn-review-sm" onclick="startWrongBankReview()" style="display:none;">
+          間違えた問題を復習 <span id="wrong-count" class="badge">0</span>
+        </button>
+        <button class="btn-secondary" onclick="showRanking()">ランキング</button>
+        <button class="btn-secondary" onclick="showStatsScreen()">成績を見る</button>
+      </div>
     </div>
   </div>
 
@@ -31,6 +85,7 @@
         <div class="progress-info">
           <span id="question-num">1</span> / <span id="total-num">10</span>
         </div>
+        <div id="mode-indicator" class="mode-indicator" style="display:none;"></div>
         <div class="progress-bar">
           <div id="progress-fill" class="progress-fill"></div>
         </div>
@@ -43,6 +98,7 @@
         <div id="timer-fill" class="timer-fill"></div>
       </div>
       <div class="question-area">
+        <div id="bonus-indicator" class="bonus-indicator" style="display:none;">BONUS ×2</div>
         <p id="question-text" class="question-text"></p>
       </div>
       <div id="choices" class="choices"></div>
@@ -60,16 +116,34 @@
         <p class="result-label">あなたのスコア</p>
         <p id="final-score" class="final-score">0</p>
         <p class="result-sub">/ <span id="final-total">10</span>問中</p>
+        <p id="result-accuracy" class="result-accuracy"></p>
         <div class="result-combo">最大コンボ: <span id="final-combo">0</span></div>
       </div>
+
+      <!-- XP獲得 -->
+      <div class="result-xp-area">
+        <span id="xp-gained" class="xp-gained">+0 XP</span>
+        <span id="result-level" class="result-level-badge">Lv.1</span>
+        <div class="xp-bar xp-bar-result"><div id="result-xp-fill" class="xp-fill"></div></div>
+      </div>
+
       <div id="final-title" class="final-title"></div>
       <div id="next-title-info" class="next-title-info"></div>
       <div id="result-comment" class="result-comment"></div>
+
+      <!-- 対戦URL -->
+      <div id="battle-url-area" class="battle-url-area" style="display:none;">
+        <p class="battle-url-label">この対戦URLを友達に送ろう！</p>
+        <input type="text" id="battle-url" class="battle-url-input" readonly>
+        <button id="copy-battle-btn" class="btn-sm btn-gold" onclick="copyBattleUrl()">URLをコピー</button>
+      </div>
+
       <div class="result-actions">
         <button class="btn-primary" onclick="retryQuiz()">もう一回</button>
         <button id="review-btn" class="btn-review" onclick="startReview()" style="display:none;">復習する</button>
         <button class="btn-secondary" onclick="showRanking()">ランキング</button>
         <button class="btn-share" onclick="shareResult()">結果をシェア</button>
+        <button class="btn-secondary" onclick="downloadScoreCard()">スコアカード保存</button>
       </div>
     </div>
   </div>
@@ -78,7 +152,24 @@
   <div id="ranking-screen" class="screen">
     <div class="ranking-container">
       <h2 class="ranking-title">ランキング</h2>
+      <div class="ranking-tabs">
+        <button id="rank-tab-all" class="rank-tab active" onclick="switchRankingTab('all')">全期間</button>
+        <button id="rank-tab-week" class="rank-tab" onclick="switchRankingTab('week')">今週</button>
+      </div>
       <div id="ranking-list" class="ranking-list"></div>
+      <button class="btn-secondary" onclick="backToStart()">戻る</button>
+    </div>
+  </div>
+
+  <!-- 成績画面 -->
+  <div id="stats-screen" class="screen">
+    <div class="stats-container">
+      <h2 class="stats-title">あなたの成績</h2>
+      <div id="overall-stats" class="overall-stats"></div>
+      <h3 class="stats-sub-title">ジャンル別正答率</h3>
+      <div id="genre-stats" class="genre-stats"></div>
+      <h3 class="stats-sub-title">獲得した特殊称号</h3>
+      <div id="special-titles" class="special-titles"></div>
       <button class="btn-secondary" onclick="backToStart()">戻る</button>
     </div>
   </div>
@@ -93,6 +184,29 @@
         <button class="btn-secondary" onclick="skipRanking()">スキップ</button>
       </div>
     </div>
+  </div>
+
+  <!-- レベルアップ演出 -->
+  <div id="levelup-overlay" class="levelup-overlay" style="display:none;">
+    <div class="levelup-content">
+      <div class="levelup-label">LEVEL UP!</div>
+      <div id="levelup-num" class="levelup-num">2</div>
+    </div>
+  </div>
+
+  <!-- ガチャ演出 -->
+  <div id="gacha-overlay" class="gacha-overlay" style="display:none;">
+    <div class="gacha-card">
+      <div class="gacha-card-inner">
+        <div class="gacha-card-front">?</div>
+        <div class="gacha-card-back">
+          <span id="gacha-icon" class="gacha-icon"></span>
+          <span id="gacha-name" class="gacha-name"></span>
+        </div>
+      </div>
+    </div>
+    <p class="gacha-label">新しい称号を獲得!</p>
+    <button class="btn-primary" onclick="closeGacha()">OK</button>
   </div>
 
   <script src="quiz-data.js"></script>
