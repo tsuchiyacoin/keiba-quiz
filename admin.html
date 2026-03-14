@@ -197,12 +197,77 @@
     }
     .form-actions .btn { flex: 1; }
 
-    /* エクスポート */
-    .export-area {
+    /* インポート・エクスポート */
+    .import-area, .export-area {
       margin-top: 20px;
       padding-top: 20px;
       border-top: 1px solid #333;
     }
+    .import-area h3, .export-area h3 {
+      font-size: 15px;
+      color: #d4af37;
+      margin-bottom: 12px;
+    }
+    .import-section {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .import-section h4 {
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 8px;
+    }
+    .import-section p {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .import-section input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 13px;
+      background: #222;
+      border: 2px dashed #444;
+      border-radius: 8px;
+      color: #aaa;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .import-section input[type="text"] {
+      width: 100%;
+      padding: 11px 12px;
+      font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #222;
+      color: #eee;
+      outline: none;
+      margin-bottom: 8px;
+    }
+    .import-section input[type="text"]:focus { border-color: #d4af37; }
+    .import-result {
+      font-size: 13px;
+      padding: 8px 0;
+      min-height: 20px;
+    }
+    .import-result.success { color: #2ecc71; }
+    .import-result.error { color: #e74c3c; }
+    .import-mode-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .import-mode-toggle label {
+      font-size: 13px;
+      color: #ccc;
+      cursor: pointer;
+    }
+    .import-mode-toggle input { margin-right: 4px; }
     .export-area textarea {
       width: 100%;
       height: 120px;
@@ -242,8 +307,45 @@
     </div>
     <div id="question-list"></div>
 
+    <!-- インポート -->
+    <div class="import-area">
+      <h3>📥 問題をインポート</h3>
+
+      <!-- CSVアップロード -->
+      <div class="import-section">
+        <h4>📄 CSVファイルからアップロード</h4>
+        <p>CSV形式: 問題文, 選択肢A, 選択肢B, 選択肢C, 選択肢D, 正解(A/B/C/D), 解説</p>
+        <input type="file" id="csv-file" accept=".csv,.txt" onchange="handleCsvUpload(event)">
+        <div class="import-mode-toggle">
+          <label><input type="radio" name="csv-mode" value="add" checked> 既存に追加</label>
+          <label><input type="radio" name="csv-mode" value="replace"> 全て入れ替え</label>
+        </div>
+        <p id="csv-result" class="import-result"></p>
+      </div>
+
+      <!-- スプレッドシート連携 -->
+      <div class="import-section">
+        <h4>📊 Googleスプレッドシートから読み込み</h4>
+        <p>
+          スプレッドシートの共有設定を「リンクを知っている全員」にして、<br>
+          ファイル → 共有 → ウェブに公開 → CSV形式で公開してURLを貼り付け<br>
+          ※列の順番: 問題文, 選択肢A, 選択肢B, 選択肢C, 選択肢D, 正解(A/B/C/D), 解説
+        </p>
+        <input type="text" id="sheet-url" placeholder="公開CSV URL を貼り付け">
+        <div class="import-mode-toggle">
+          <label><input type="radio" name="sheet-mode" value="add" checked> 既存に追加</label>
+          <label><input type="radio" name="sheet-mode" value="replace"> 全て入れ替え</label>
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="fetchSpreadsheet()">読み込み</button>
+        <p id="sheet-result" class="import-result"></p>
+      </div>
+    </div>
+
+    <!-- エクスポート -->
     <div class="export-area">
+      <h3>📤 エクスポート</h3>
       <button class="btn btn-blue btn-sm" onclick="exportData()">quiz-data.js にエクスポート</button>
+      <button class="btn btn-gray btn-sm" onclick="exportCsv()">CSVでダウンロード</button>
       <textarea id="export-output" readonly placeholder="エクスポートしたデータがここに表示されます"></textarea>
     </div>
   </div>
@@ -452,11 +554,199 @@
       renderList();
     }
 
+    // === CSVパース ===
+    function parseCsvLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+          if (ch === '"' && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else if (ch === '"') {
+            inQuotes = false;
+          } else {
+            current += ch;
+          }
+        } else {
+          if (ch === '"') {
+            inQuotes = true;
+          } else if (ch === ',') {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += ch;
+          }
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    function csvToQuestions(csvText) {
+      const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+      const questions = [];
+      const errors = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const cols = parseCsvLine(lines[i]);
+
+        // ヘッダー行をスキップ
+        if (i === 0 && (cols[0] === '問題文' || cols[0] === '問題' || cols[0].toLowerCase() === 'question')) continue;
+
+        if (cols.length < 6) {
+          errors.push(`${i + 1}行目: 列が足りません（${cols.length}列）`);
+          continue;
+        }
+
+        const question = cols[0];
+        const choices = [cols[1], cols[2], cols[3], cols[4]];
+        const answerRaw = cols[5].toUpperCase();
+
+        let answer;
+        if (['A', 'B', 'C', 'D'].includes(answerRaw)) {
+          answer = answerRaw.charCodeAt(0) - 65;
+        } else if (['0', '1', '2', '3'].includes(answerRaw)) {
+          answer = parseInt(answerRaw);
+        } else {
+          errors.push(`${i + 1}行目: 正解が不正です（${cols[5]}）`);
+          continue;
+        }
+
+        if (!question || choices.some(c => !c)) {
+          errors.push(`${i + 1}行目: 空の項目があります`);
+          continue;
+        }
+
+        questions.push({
+          question,
+          choices,
+          answer,
+          explanation: cols[6] || ''
+        });
+      }
+      return { questions, errors };
+    }
+
+    // === CSVファイルアップロード ===
+    function handleCsvUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const resultEl = document.getElementById('csv-result');
+      resultEl.textContent = '読み込み中...';
+      resultEl.className = 'import-result';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const { questions, errors } = csvToQuestions(text);
+
+        if (questions.length === 0) {
+          resultEl.textContent = '取り込める問題がありません。' + (errors.length ? ' ' + errors[0] : '');
+          resultEl.className = 'import-result error';
+          return;
+        }
+
+        const mode = document.querySelector('input[name="csv-mode"]:checked').value;
+        const existing = mode === 'add' ? getQuestions() : [];
+        saveQuestions(existing.concat(questions));
+        renderList();
+
+        let msg = `${questions.length}問を${mode === 'add' ? '追加' : '取り込み'}しました！`;
+        if (errors.length) msg += `（${errors.length}件スキップ）`;
+        resultEl.textContent = msg;
+        resultEl.className = 'import-result success';
+      };
+      reader.onerror = function() {
+        resultEl.textContent = 'ファイルの読み込みに失敗しました';
+        resultEl.className = 'import-result error';
+      };
+      reader.readAsText(file);
+    }
+
+    // === Googleスプレッドシート連携 ===
+    function fetchSpreadsheet() {
+      let url = document.getElementById('sheet-url').value.trim();
+      const resultEl = document.getElementById('sheet-result');
+
+      if (!url) {
+        resultEl.textContent = 'URLを入力してください';
+        resultEl.className = 'import-result error';
+        return;
+      }
+
+      // スプレッドシートURLを自動変換
+      const sheetMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      if (sheetMatch) {
+        // gidがあれば取得
+        const gidMatch = url.match(/gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : '0';
+        url = `https://docs.google.com/spreadsheets/d/${sheetMatch[1]}/export?format=csv&gid=${gid}`;
+      }
+
+      resultEl.textContent = '読み込み中...';
+      resultEl.className = 'import-result';
+
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error('取得失敗（' + res.status + '）');
+          return res.text();
+        })
+        .then(text => {
+          const { questions, errors } = csvToQuestions(text);
+
+          if (questions.length === 0) {
+            resultEl.textContent = '取り込める問題がありません。' + (errors.length ? ' ' + errors[0] : '');
+            resultEl.className = 'import-result error';
+            return;
+          }
+
+          const mode = document.querySelector('input[name="sheet-mode"]:checked').value;
+          const existing = mode === 'add' ? getQuestions() : [];
+          saveQuestions(existing.concat(questions));
+          renderList();
+
+          let msg = `${questions.length}問を${mode === 'add' ? '追加' : '取り込み'}しました！`;
+          if (errors.length) msg += `（${errors.length}件スキップ）`;
+          resultEl.textContent = msg;
+          resultEl.className = 'import-result success';
+        })
+        .catch(err => {
+          resultEl.textContent = '読み込み失敗: ' + err.message + '（CORSエラーの場合は「ウェブに公開」のCSV URLを使ってください）';
+          resultEl.className = 'import-result error';
+        });
+    }
+
     // === エクスポート ===
     function exportData() {
       const questions = getQuestions();
       const js = 'const quizData = ' + JSON.stringify(questions, null, 2) + ';\n';
       document.getElementById('export-output').value = js;
+    }
+
+    function exportCsv() {
+      const questions = getQuestions();
+      const labels = ['A', 'B', 'C', 'D'];
+      const header = '問題文,選択肢A,選択肢B,選択肢C,選択肢D,正解,解説';
+      const rows = questions.map(q => {
+        const cols = [
+          q.question,
+          ...q.choices,
+          labels[q.answer],
+          q.explanation || ''
+        ];
+        return cols.map(c => '"' + c.replace(/"/g, '""') + '"').join(',');
+      });
+      const csv = header + '\n' + rows.join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'keiba-quiz.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
 
     // === ユーティリティ ===
