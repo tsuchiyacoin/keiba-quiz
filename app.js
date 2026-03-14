@@ -422,7 +422,7 @@ function updateModeIndicator() {
   if (isBattleMode) parts.push('BATTLE');
   const settings = getSettings();
   if (settings.difficulty && settings.difficulty !== 'all') {
-    parts.push(DIFFICULTY_SETTINGS[settings.difficulty]?.label || '');
+    var d = DIFFICULTY_SETTINGS[settings.difficulty]; parts.push(d ? d.label : '');
   }
   el.textContent = parts.join(' | ');
   el.style.display = parts.length > 0 ? 'block' : 'none';
@@ -883,7 +883,7 @@ function showResult() {
 
   // XP計算
   const settings = getSettings();
-  const diffMul = DIFFICULTY_SETTINGS[settings.difficulty]?.xpMul || 1;
+  var diffSetting = DIFFICULTY_SETTINGS[settings.difficulty]; var diffMul = diffSetting ? diffSetting.xpMul : 1;
   const streakMul = getStreakMultiplier();
   const hardMul = isHardMode ? 1.5 : 1;
   const baseXp = correctCount * 10;
