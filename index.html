@@ -102,10 +102,15 @@
         <p id="question-text" class="question-text"></p>
       </div>
       <div id="choices" class="choices"></div>
-      <div id="combo-label" class="combo-label"></div>
-      <div id="result-msg" class="result-msg"></div>
-      <div id="explanation" class="explanation"></div>
-      <button id="next-btn" class="btn-next" onclick="nextQuestion()" style="display:none;">次の問題</button>
+
+      <!-- 回答後の結果カード -->
+      <div id="answer-card" class="answer-card" style="display:none;">
+        <div id="result-msg" class="result-msg"></div>
+        <div id="combo-label" class="combo-label"></div>
+        <div id="correct-answer-display" class="correct-answer-display"></div>
+        <div id="explanation" class="explanation"></div>
+        <button id="next-btn" class="btn-next-card" onclick="nextQuestion()">次の問題 ▶</button>
+      </div>
     </div>
   </div>
 

@@ -114,14 +114,17 @@ body {
 }
 .btn-battle:active { transform: scale(0.97); }
 
-.btn-next {
-  position: fixed; bottom: 0; left: 0;
-  width: 100%; padding: 18px; font-size: 18px; font-weight: 700;
-  border: none; border-radius: 0;
-  background: #d4af37; color: #1b3a2d;
-  cursor: pointer; z-index: 50; transition: transform 0.1s;
+/* 次の問題ボタン（カード内） */
+.btn-next-card {
+  width: 100%; padding: 18px; font-size: 18px; font-weight: 900;
+  border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #c9942e, #d4af37, #f0d060);
+  color: #1b3a2d; cursor: pointer;
+  margin-top: 16px; transition: transform 0.1s;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
 }
-.btn-next:active { transform: scale(0.97); }
+.btn-next-card:active { transform: scale(0.97); }
 
 .btn-review {
   width: 100%; padding: 15px; font-size: 16px; font-weight: 700;
@@ -280,23 +283,50 @@ body {
 .timer-fill.danger { background: #e74c3c; }
 .timer-fill.timeup { width: 0% !important; background: #e74c3c; }
 
+/* 回答後カード */
+.answer-card {
+  background: #1a2e24;
+  border: 2px solid #3d6b4f;
+  border-radius: 16px;
+  padding: 20px 18px;
+  margin-top: 16px;
+  animation: fadeIn 0.3s ease;
+}
+.answer-card.correct-card { border-color: #2ecc71; }
+.answer-card.wrong-card { border-color: #e74c3c; }
+.answer-card.timeup-card { border-color: #f39c12; }
+
 /* 結果メッセージ */
 .result-msg {
-  text-align: center; font-size: 18px; font-weight: 900;
-  margin-top: 16px; min-height: 28px;
+  text-align: center; font-size: 22px; font-weight: 900;
+  margin-bottom: 10px;
 }
 .result-msg.correct { color: #2ecc71; }
 .result-msg.wrong { color: #e74c3c; }
 .result-msg.timeup { color: #f39c12; }
 
+/* 正解表示 */
+.correct-answer-display {
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 15px; font-weight: 700;
+  color: #2ecc71;
+  text-align: center;
+}
+
 /* 解説 */
 .explanation {
-  background: #1e3d2f; border: 1px solid #3d6b4f;
-  border-radius: 10px; padding: 14px 16px; margin-top: 12px;
-  font-size: 13px; line-height: 1.7; color: #b8cdb5;
-  display: none; margin-bottom: 60px;
+  background: rgba(240, 236, 226, 0.08);
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-size: 15px; line-height: 1.8;
+  color: #f0ece2;
+  display: none;
 }
-.explanation.show { display: block; animation: fadeIn 0.3s ease; }
+.explanation.show { display: block; }
 
 /* コンボラベル */
 .combo-label {

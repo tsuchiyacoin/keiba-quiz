@@ -608,9 +608,17 @@ function loadQuestion() {
   document.getElementById('question-text').textContent = q.question;
   document.getElementById('result-msg').textContent = '';
   document.getElementById('result-msg').className = 'result-msg';
-  document.getElementById('next-btn').style.display = 'none';
   document.getElementById('combo-label').textContent = '';
   document.getElementById('combo-label').className = 'combo-label';
+
+  // 回答カードを非表示
+  const answerCard = document.getElementById('answer-card');
+  if (answerCard) {
+    answerCard.style.display = 'none';
+    answerCard.className = 'answer-card';
+  }
+  const correctDisplay = document.getElementById('correct-answer-display');
+  if (correctDisplay) correctDisplay.textContent = '';
 
   const expEl = document.getElementById('explanation');
   expEl.textContent = '';
@@ -716,10 +724,7 @@ function onTimeUp() {
 
   playSound('timeup');
   vibrate(200);
-  showExplanation(q);
-  const nextBtn = document.getElementById('next-btn');
-  nextBtn.style.display = 'block';
-  setTimeout(() => nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+  showAnswerCard(q, 'timeup');
 }
 
 // ============================================================
@@ -799,10 +804,7 @@ function selectAnswer(btn, selected, correct, container) {
   document.getElementById('current-score').parentElement.classList.add('pop');
   setTimeout(() => document.getElementById('current-score').parentElement.classList.remove('pop'), 300);
 
-  showExplanation(q);
-  const nextBtn = document.getElementById('next-btn');
-  nextBtn.style.display = 'block';
-  setTimeout(() => nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+  showAnswerCard(q, selected === correct ? 'correct' : 'wrong');
 }
 
 // ============================================================
@@ -831,12 +833,32 @@ function updateComboDisplay(text, multiplier) {
   }
 }
 
-function showExplanation(q) {
+function showAnswerCard(q, resultType) {
+  const card = document.getElementById('answer-card');
+  if (!card) return;
+
+  // カードの枠色
+  card.className = 'answer-card';
+  if (resultType === 'correct') card.classList.add('correct-card');
+  else if (resultType === 'wrong') card.classList.add('wrong-card');
+  else card.classList.add('timeup-card');
+
+  // 正解の選択肢を表示
+  const labels = ['A', 'B', 'C', 'D'];
+  const correctDisplay = document.getElementById('correct-answer-display');
+  if (correctDisplay) {
+    correctDisplay.textContent = `正解: ${labels[q.answer]}. ${q.choices[q.answer]}`;
+  }
+
+  // 解説
   const expEl = document.getElementById('explanation');
   if (q.explanation) {
     expEl.textContent = q.explanation;
     expEl.classList.add('show');
   }
+
+  card.style.display = 'block';
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
 }
 
 // ============================================================
