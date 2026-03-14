@@ -19,7 +19,6 @@
         <p class="subtitle">あなたの競馬知識を試そう</p>
       </div>
 
-      <!-- レベル & XP -->
       <div class="xp-bar-container">
         <div class="xp-level">Lv.<span id="player-level">1</span></div>
         <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
@@ -29,12 +28,10 @@
       <div id="player-title" class="player-title"></div>
       <div id="streak-display" class="streak-display" style="display:none;"></div>
 
-      <!-- メインボタン -->
-      <button class="btn-primary" onclick="startQuiz()">スタート</button>
-      <button id="daily-btn" class="btn-daily" onclick="startDailyChallenge()">📅 デイリーチャレンジ</button>
-      <button class="btn-battle" onclick="startBattle()">⚔️ 友達と対戦</button>
+      <button id="start-btn" class="btn-primary">スタート</button>
+      <button id="daily-btn" class="btn-daily">📅 デイリーチャレンジ</button>
+      <button id="battle-btn" class="btn-battle">⚔️ 友達と対戦</button>
 
-      <!-- 設定パネル -->
       <details class="settings-panel">
         <summary>設定</summary>
         <div class="settings-content">
@@ -67,13 +64,12 @@
         </div>
       </details>
 
-      <!-- セカンダリボタン -->
       <div class="secondary-actions">
-        <button id="wrong-bank-btn" class="btn-review-sm" onclick="startWrongBankReview()" style="display:none;">
+        <button id="wrong-bank-btn" class="btn-review-sm" style="display:none;">
           間違えた問題を復習 <span id="wrong-count" class="badge">0</span>
         </button>
-        <button class="btn-secondary" onclick="showRanking()">ランキング</button>
-        <button class="btn-secondary" onclick="showStatsScreen()">成績を見る</button>
+        <button id="ranking-btn" class="btn-secondary">ランキング</button>
+        <button id="stats-btn" class="btn-secondary">成績を見る</button>
       </div>
     </div>
   </div>
@@ -103,13 +99,12 @@
       </div>
       <div id="choices" class="choices"></div>
 
-      <!-- 回答後の結果カード -->
       <div id="answer-card" class="answer-card" style="display:none;">
         <div id="result-msg" class="result-msg"></div>
         <div id="combo-label" class="combo-label"></div>
         <div id="correct-answer-display" class="correct-answer-display"></div>
         <div id="explanation" class="explanation"></div>
-        <button id="next-btn" class="btn-next-card" onclick="nextQuestion()">次の問題 ▶</button>
+        <button id="next-btn" class="btn-next-card">次の問題 ▶</button>
       </div>
     </div>
   </div>
@@ -125,7 +120,6 @@
         <div class="result-combo">最大コンボ: <span id="final-combo">0</span></div>
       </div>
 
-      <!-- XP獲得 -->
       <div class="result-xp-area">
         <span id="xp-gained" class="xp-gained">+0 XP</span>
         <span id="result-level" class="result-level-badge">Lv.1</span>
@@ -136,19 +130,18 @@
       <div id="next-title-info" class="next-title-info"></div>
       <div id="result-comment" class="result-comment"></div>
 
-      <!-- 対戦URL -->
       <div id="battle-url-area" class="battle-url-area" style="display:none;">
         <p class="battle-url-label">この対戦URLを友達に送ろう！</p>
         <input type="text" id="battle-url" class="battle-url-input" readonly>
-        <button id="copy-battle-btn" class="btn-sm btn-gold" onclick="copyBattleUrl()">URLをコピー</button>
+        <button id="copy-battle-btn" class="btn-sm btn-gold">URLをコピー</button>
       </div>
 
       <div class="result-actions">
-        <button class="btn-primary" onclick="retryQuiz()">もう一回</button>
-        <button id="review-btn" class="btn-review" onclick="startReview()" style="display:none;">復習する</button>
-        <button class="btn-secondary" onclick="showRanking()">ランキング</button>
-        <button class="btn-share" onclick="shareResult()">結果をシェア</button>
-        <button class="btn-secondary" onclick="downloadScoreCard()">スコアカード保存</button>
+        <button id="retry-btn" class="btn-primary">もう一回</button>
+        <button id="review-btn" class="btn-review" style="display:none;">復習する</button>
+        <button id="ranking-btn-2" class="btn-secondary">ランキング</button>
+        <button id="share-btn" class="btn-share">結果をシェア</button>
+        <button id="download-card-btn" class="btn-secondary">スコアカード保存</button>
       </div>
     </div>
   </div>
@@ -158,11 +151,11 @@
     <div class="ranking-container">
       <h2 class="ranking-title">ランキング</h2>
       <div class="ranking-tabs">
-        <button id="rank-tab-all" class="rank-tab active" onclick="switchRankingTab('all')">全期間</button>
-        <button id="rank-tab-week" class="rank-tab" onclick="switchRankingTab('week')">今週</button>
+        <button id="rank-tab-all" class="rank-tab active">全期間</button>
+        <button id="rank-tab-week" class="rank-tab">今週</button>
       </div>
       <div id="ranking-list" class="ranking-list"></div>
-      <button class="btn-secondary" onclick="backToStart()">戻る</button>
+      <button id="ranking-back-btn" class="btn-secondary">戻る</button>
     </div>
   </div>
 
@@ -175,7 +168,7 @@
       <div id="genre-stats" class="genre-stats"></div>
       <h3 class="stats-sub-title">獲得した特殊称号</h3>
       <div id="special-titles" class="special-titles"></div>
-      <button class="btn-secondary" onclick="backToStart()">戻る</button>
+      <button id="stats-back-btn" class="btn-secondary">戻る</button>
     </div>
   </div>
 
@@ -185,8 +178,8 @@
       <p>ランキングに登録するニックネームを入力</p>
       <input type="text" id="nickname-input" maxlength="10" placeholder="ニックネーム">
       <div class="modal-actions">
-        <button class="btn-primary" onclick="submitScore()">登録</button>
-        <button class="btn-secondary" onclick="skipRanking()">スキップ</button>
+        <button id="submit-score-btn" class="btn-primary">登録</button>
+        <button id="skip-ranking-btn" class="btn-secondary">スキップ</button>
       </div>
     </div>
   </div>
@@ -211,7 +204,7 @@
       </div>
     </div>
     <p class="gacha-label">新しい称号を獲得!</p>
-    <button class="btn-primary" onclick="closeGacha()">OK</button>
+    <button id="close-gacha-btn" class="btn-primary">OK</button>
   </div>
 
   <script src="quiz-data.js"></script>

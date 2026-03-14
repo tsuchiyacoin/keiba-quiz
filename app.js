@@ -1320,8 +1320,57 @@ function backToStart() {
 }
 
 // ============================================================
+// イベントリスナー登録
+// ============================================================
+function bind(id, fn) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('click', function(e) { e.preventDefault(); fn(); });
+}
+
+function initEvents() {
+  // スタート画面
+  bind('start-btn', startQuiz);
+  bind('daily-btn', startDailyChallenge);
+  bind('battle-btn', startBattle);
+  bind('wrong-bank-btn', startWrongBankReview);
+  bind('ranking-btn', showRanking);
+  bind('stats-btn', showStatsScreen);
+
+  // クイズ画面
+  bind('next-btn', nextQuestion);
+
+  // 結果画面
+  bind('retry-btn', retryQuiz);
+  bind('review-btn', startReview);
+  bind('ranking-btn-2', showRanking);
+  bind('share-btn', shareResult);
+  bind('download-card-btn', downloadScoreCard);
+  bind('copy-battle-btn', copyBattleUrl);
+
+  // ランキング画面
+  bind('rank-tab-all', function() { switchRankingTab('all'); });
+  bind('rank-tab-week', function() { switchRankingTab('week'); });
+  bind('ranking-back-btn', backToStart);
+
+  // 成績画面
+  bind('stats-back-btn', backToStart);
+
+  // モーダル
+  bind('submit-score-btn', submitScore);
+  bind('skip-ranking-btn', skipRanking);
+
+  // ガチャ
+  bind('close-gacha-btn', closeGacha);
+}
+
+// ============================================================
 // 初期化
 // ============================================================
-checkStreak();
-updateStartScreen();
-checkBattleFromUrl();
+try {
+  initEvents();
+  checkStreak();
+  updateStartScreen();
+  checkBattleFromUrl();
+} catch (e) {
+  console.error('初期化エラー:', e);
+}
