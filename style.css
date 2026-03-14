@@ -197,6 +197,28 @@ body {
   transform: translateX(22px); background: #fff;
 }
 
+/* メインタブ */
+.main-tabs {
+  display: flex; gap: 0; margin-bottom: 16px;
+  background: #244535; border-radius: 12px;
+  padding: 4px; overflow: hidden;
+}
+.main-tab {
+  flex: 1; padding: 12px 8px; font-size: 15px; font-weight: 700;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: none; border-radius: 10px;
+  background: transparent; color: #8faa8b;
+  cursor: pointer; transition: all 0.2s;
+}
+.main-tab.active {
+  background: linear-gradient(135deg, #c9942e, #d4af37);
+  color: #1b3a2d;
+}
+
+/* タブコンテンツ */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+
 .secondary-actions { margin-top: 10px; }
 
 /* ========== クイズ画面 ========== */
@@ -502,6 +524,15 @@ body {
   outline: none; margin-bottom: 16px; text-align: center;
 }
 .modal-content input:focus { border-color: #d4af37; }
+.modal-content textarea {
+  width: 100%; padding: 13px 14px; font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: 2px solid #3d6b4f; border-radius: 10px;
+  background: #1b3a2d; color: #f0ece2;
+  outline: none; margin-bottom: 16px;
+  resize: vertical; min-height: 80px;
+}
+.modal-content textarea:focus { border-color: #d4af37; }
 
 /* ========== レベルアップ演出 ========== */
 .levelup-overlay {
@@ -584,14 +615,55 @@ body {
 .speak-btn:active { transform: scale(0.9); }
 .question-area { position: relative; }
 
-/* ========== 掲示板ボタン ========== */
-.btn-board {
-  width: 100%; padding: 15px; font-size: 16px; font-weight: 700;
-  border: 2px solid #9b59b6; border-radius: 10px;
-  background: rgba(155, 89, 182, 0.1); color: #9b59b6;
-  cursor: pointer; margin-bottom: 10px; transition: transform 0.1s;
+/* ========== スレッド一覧 ========== */
+.thread-list { margin-bottom: 12px; }
+.thread-item {
+  background: #244535; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 8px;
+  cursor: pointer; transition: transform 0.1s, border-color 0.2s;
+  border: 2px solid transparent;
 }
-.btn-board:active { transform: scale(0.97); }
+.thread-item:active { transform: scale(0.98); border-color: #d4af37; }
+.thread-item-title {
+  font-size: 15px; font-weight: 700; color: #f0ece2;
+  margin-bottom: 6px; line-height: 1.5;
+}
+.thread-item-meta {
+  display: flex; justify-content: space-between;
+  align-items: center; font-size: 11px; color: #8faa8b;
+}
+.thread-item-replies {
+  font-size: 12px; font-weight: 700; color: #d4af37;
+  background: rgba(212, 175, 55, 0.15);
+  padding: 2px 8px; border-radius: 10px;
+}
+
+/* スレッド詳細ヘッダー */
+.thread-header-detail {
+  background: #244535; border-radius: 12px;
+  padding: 16px; margin-bottom: 12px;
+  border-left: 4px solid #d4af37;
+}
+.thread-detail-title {
+  font-size: 18px; font-weight: 900; color: #d4af37;
+  margin-bottom: 8px; line-height: 1.5;
+}
+.thread-detail-body {
+  font-size: 14px; line-height: 1.7; color: #f0ece2;
+  margin-bottom: 8px; word-break: break-word;
+}
+.thread-detail-meta {
+  font-size: 11px; color: #8faa8b;
+}
+
+/* 戻るボタン */
+.btn-back {
+  display: inline-block; padding: 8px 0; font-size: 14px; font-weight: 700;
+  border: none; background: transparent; color: #8faa8b;
+  cursor: pointer; margin-bottom: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.btn-back:active { color: #d4af37; }
 
 /* ========== 掲示板画面 ========== */
 .board-container {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>競馬クイズ</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
@@ -19,65 +19,82 @@
         <p class="subtitle">あなたの競馬知識を試そう</p>
       </div>
 
-      <div class="xp-bar-container">
-        <div class="xp-level">Lv.<span id="player-level">1</span></div>
-        <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
-        <div id="xp-text" class="xp-text">0 / 100 XP</div>
+      <!-- メインタブ -->
+      <div class="main-tabs">
+        <button id="tab-quiz" class="main-tab active">🏇 クイズ</button>
+        <button id="tab-board" class="main-tab">💬 掲示板</button>
       </div>
 
-      <div id="player-title" class="player-title"></div>
-      <div id="streak-display" class="streak-display" style="display:none;"></div>
-
-      <button id="start-btn" class="btn-primary">スタート</button>
-      <button id="daily-btn" class="btn-daily">📅 デイリーチャレンジ</button>
-      <button id="battle-btn" class="btn-battle">⚔️ 友達と対戦</button>
-
-      <details class="settings-panel">
-        <summary>設定</summary>
-        <div class="settings-content">
-          <div class="setting-group">
-            <label class="setting-label">ジャンル</label>
-            <div class="genre-checks">
-              <label><input type="checkbox" class="genre-check" value="general"> 総合</label>
-              <label><input type="checkbox" class="genre-check" value="g1"> G1レース</label>
-              <label><input type="checkbox" class="genre-check" value="bloodline"> 血統</label>
-              <label><input type="checkbox" class="genre-check" value="jockey"> 騎手</label>
-              <label><input type="checkbox" class="genre-check" value="history"> 歴史</label>
-            </div>
-          </div>
-          <div class="setting-group">
-            <label class="setting-label">難易度</label>
-            <div class="diff-radios">
-              <label><input type="radio" name="difficulty" value="all" checked> 全て</label>
-              <label><input type="radio" name="difficulty" value="beginner"> 初級</label>
-              <label><input type="radio" name="difficulty" value="intermediate"> 中級</label>
-              <label><input type="radio" name="difficulty" value="advanced"> 上級</label>
-            </div>
-          </div>
-          <div class="setting-group">
-            <label class="setting-label">ハードモード (制限時間8秒)</label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="hard-toggle">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-group">
-            <label class="setting-label">読み上げ機能</label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="speech-toggle">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+      <!-- クイズタブ -->
+      <div id="tab-quiz-content" class="tab-content active">
+        <div class="xp-bar-container">
+          <div class="xp-level">Lv.<span id="player-level">1</span></div>
+          <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
+          <div id="xp-text" class="xp-text">0 / 100 XP</div>
         </div>
-      </details>
 
-      <div class="secondary-actions">
-        <button id="wrong-bank-btn" class="btn-review-sm" style="display:none;">
-          間違えた問題を復習 <span id="wrong-count" class="badge">0</span>
-        </button>
-        <button id="ranking-btn" class="btn-secondary">ランキング</button>
-        <button id="stats-btn" class="btn-secondary">成績を見る</button>
-        <button id="board-btn" class="btn-board">💬 掲示板</button>
+        <div id="player-title" class="player-title"></div>
+        <div id="streak-display" class="streak-display" style="display:none;"></div>
+
+        <button id="start-btn" class="btn-primary">スタート</button>
+        <button id="daily-btn" class="btn-daily">📅 デイリーチャレンジ</button>
+        <button id="battle-btn" class="btn-battle">⚔️ 友達と対戦</button>
+
+        <details class="settings-panel">
+          <summary>設定</summary>
+          <div class="settings-content">
+            <div class="setting-group">
+              <label class="setting-label">ジャンル</label>
+              <div class="genre-checks">
+                <label><input type="checkbox" class="genre-check" value="general"> 総合</label>
+                <label><input type="checkbox" class="genre-check" value="g1"> G1レース</label>
+                <label><input type="checkbox" class="genre-check" value="bloodline"> 血統</label>
+                <label><input type="checkbox" class="genre-check" value="jockey"> 騎手</label>
+                <label><input type="checkbox" class="genre-check" value="history"> 歴史</label>
+              </div>
+            </div>
+            <div class="setting-group">
+              <label class="setting-label">難易度</label>
+              <div class="diff-radios">
+                <label><input type="radio" name="difficulty" value="all" checked> 全て</label>
+                <label><input type="radio" name="difficulty" value="beginner"> 初級</label>
+                <label><input type="radio" name="difficulty" value="intermediate"> 中級</label>
+                <label><input type="radio" name="difficulty" value="advanced"> 上級</label>
+              </div>
+            </div>
+            <div class="setting-group">
+              <label class="setting-label">ハードモード (制限時間8秒)</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="hard-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-group">
+              <label class="setting-label">読み上げ機能</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="speech-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <div class="secondary-actions">
+          <button id="wrong-bank-btn" class="btn-review-sm" style="display:none;">
+            間違えた問題を復習 <span id="wrong-count" class="badge">0</span>
+          </button>
+          <button id="ranking-btn" class="btn-secondary">ランキング</button>
+          <button id="stats-btn" class="btn-secondary">成績を見る</button>
+        </div>
+      </div>
+
+      <!-- 掲示板タブ -->
+      <div id="tab-board-content" class="tab-content">
+        <button id="new-thread-btn" class="btn-primary">＋ 新しいスレッドを作成</button>
+        <div id="thread-list" class="thread-list">
+          <p class="board-empty">読み込み中...</p>
+        </div>
+        <button id="thread-load-more" class="btn-secondary" style="display:none;">もっと読み込む</button>
       </div>
     </div>
   </div>
@@ -181,18 +198,32 @@
     </div>
   </div>
 
-  <!-- 掲示板画面 -->
-  <div id="board-screen" class="screen">
-    <div class="board-container">
-      <h2 class="board-title">💬 掲示板</h2>
-      <div class="board-post-form">
-        <input type="text" id="board-name" class="board-input" maxlength="10" placeholder="ニックネーム">
-        <textarea id="board-message" class="board-textarea" maxlength="200" placeholder="メッセージを入力（200文字まで）"></textarea>
-        <button id="board-post-btn" class="btn-primary">投稿する</button>
+  <!-- スレッド作成モーダル -->
+  <div id="thread-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <p>新しいスレッドを作成</p>
+      <input type="text" id="thread-title-input" maxlength="40" placeholder="スレッドタイトル">
+      <input type="text" id="thread-name-input" maxlength="10" placeholder="ニックネーム">
+      <textarea id="thread-body-input" class="board-textarea" maxlength="500" placeholder="最初の投稿（500文字まで）"></textarea>
+      <div class="modal-actions">
+        <button id="thread-create-btn" class="btn-primary">作成</button>
+        <button id="thread-cancel-btn" class="btn-secondary">キャンセル</button>
       </div>
-      <div id="board-posts" class="board-posts"></div>
-      <button id="board-load-more" class="btn-secondary" style="display:none;">もっと読み込む</button>
-      <button id="board-back-btn" class="btn-secondary">戻る</button>
+    </div>
+  </div>
+
+  <!-- スレッド詳細画面 -->
+  <div id="thread-screen" class="screen">
+    <div class="board-container">
+      <button id="thread-back-btn" class="btn-back">← スレッド一覧へ</button>
+      <div id="thread-header" class="thread-header-detail"></div>
+      <div id="thread-replies" class="board-posts"></div>
+      <button id="reply-load-more" class="btn-secondary" style="display:none;">もっと読み込む</button>
+      <div class="board-post-form">
+        <input type="text" id="reply-name" class="board-input" maxlength="10" placeholder="ニックネーム">
+        <textarea id="reply-message" class="board-textarea" maxlength="500" placeholder="返信を入力（500文字まで）"></textarea>
+        <button id="reply-post-btn" class="btn-primary">返信する</button>
+      </div>
     </div>
   </div>
 
@@ -237,9 +268,9 @@
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js?v=7"></script>
-  <script src="quiz-data.js?v=7"></script>
-  <script src="sounds.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="firebase-config.js?v=8"></script>
+  <script src="quiz-data.js?v=8"></script>
+  <script src="sounds.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

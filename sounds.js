@@ -1,5 +1,5 @@
 // Web Audio APIで効果音を生成（ファイル不要）
-let audioCtx = null;
+var audioCtx = null;
 
 function getAudioCtx() {
   if (!audioCtx) {
@@ -13,14 +13,14 @@ function getAudioCtx() {
 }
 
 function playSound(type) {
-  const ctx = getAudioCtx();
+  var ctx = getAudioCtx();
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
-  const now = ctx.currentTime;
+  var now = ctx.currentTime;
 
   if (type === 'correct') {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(523, now);
@@ -32,8 +32,8 @@ function playSound(type) {
   }
 
   if (type === 'wrong') {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'square';
     osc.frequency.setValueAtTime(150, now);
@@ -44,9 +44,9 @@ function playSound(type) {
   }
 
   if (type === 'combo') {
-    [523, 659, 784, 1047].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    [523, 659, 784, 1047].forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.06);
@@ -57,8 +57,8 @@ function playSound(type) {
   }
 
   if (type === 'timeup') {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(400, now);
@@ -69,9 +69,9 @@ function playSound(type) {
   }
 
   if (type === 'result') {
-    [523, 659, 784, 1047, 784, 1047].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    [523, 659, 784, 1047, 784, 1047].forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.12);
@@ -82,8 +82,8 @@ function playSound(type) {
   }
 
   if (type === 'tick') {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, now);
@@ -93,9 +93,9 @@ function playSound(type) {
   }
 
   if (type === 'levelup') {
-    [523, 659, 784, 1047, 1319, 1568].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    [523, 659, 784, 1047, 1319, 1568].forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.08);
@@ -106,9 +106,9 @@ function playSound(type) {
   }
 
   if (type === 'gacha') {
-    for (let i = 0; i < 12; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    for (var i = 0; i < 12; i++) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(200 + i * 30, now + i * 0.06);
@@ -116,9 +116,9 @@ function playSound(type) {
       gain.gain.linearRampToValueAtTime(0, now + i * 0.06 + 0.08);
       osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.08);
     }
-    [784, 988, 1175, 1568].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    [784, 988, 1175, 1568].forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + 0.9 + i * 0.1);
@@ -129,9 +129,9 @@ function playSound(type) {
   }
 
   if (type === 'bonus') {
-    [1047, 1319, 1568, 1319, 1568, 2093].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    [1047, 1319, 1568, 1319, 1568, 2093].forEach(function(freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + i * 0.05);

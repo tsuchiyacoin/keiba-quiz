@@ -1,29 +1,29 @@
 // ============================================================
 // 状態管理
 // ============================================================
-let currentQuestion = 0;
-let score = 0;
-let answered = false;
-let shuffledQuiz = [];
-let timer = null;
-let timeLeft = 0;
-let combo = 0;
-let maxCombo = 0;
-let wrongList = [];
-let correctCount = 0;
-let isReviewMode = false;
-let isDailyMode = false;
-let isBattleMode = false;
-let battleSeed = null;
-let isHardMode = false;
-let isBonusQuestion = false;
-let currentTimeLimit = 15;
-let prevTitleName = '';
+var currentQuestion = 0;
+var score = 0;
+var answered = false;
+var shuffledQuiz = [];
+var timer = null;
+var timeLeft = 0;
+var combo = 0;
+var maxCombo = 0;
+var wrongList = [];
+var correctCount = 0;
+var isReviewMode = false;
+var isDailyMode = false;
+var isBattleMode = false;
+var battleSeed = null;
+var isHardMode = false;
+var isBonusQuestion = false;
+var currentTimeLimit = 15;
+var prevTitleName = '';
 
 // ============================================================
 // 称号データ
 // ============================================================
-const TITLES = [
+var TITLES = [
   { min: 0, name: '見習いファン', icon: '🐴' },
   { min: 10, name: '競馬ファン', icon: '🏇' },
   { min: 30, name: '馬券師', icon: '🎫' },
@@ -32,13 +32,13 @@ const TITLES = [
   { min: 200, name: '伝説の予想家', icon: '🔥' },
 ];
 
-const SPECIAL_TITLES = {
+var SPECIAL_TITLES = {
   fullCombo: { name: 'フルコンボマスター', icon: '💎' },
   dailyPerfect: { name: 'デイリーパーフェクト', icon: '🌟' },
   hardFullCombo: { name: '鉄の馬', icon: '🛡️' },
 };
 
-const GENRES = {
+var GENRES = {
   general: '総合',
   g1: 'G1レース',
   bloodline: '血統',
@@ -46,7 +46,7 @@ const GENRES = {
   history: '歴史',
 };
 
-const DIFFICULTY_SETTINGS = {
+var DIFFICULTY_SETTINGS = {
   beginner: { label: '初級', time: 20, xpMul: 1 },
   intermediate: { label: '中級', time: 15, xpMul: 1.5 },
   advanced: { label: '上級', time: 10, xpMul: 2 },
@@ -64,55 +64,55 @@ function safeJsonParse(str, fallback) {
 }
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
 }
 
 function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
   }
   return arr;
 }
 
 // シード付きランダム (mulberry32)
 function seededRng(seed) {
-  let s = seed | 0;
+  var s = seed | 0;
   return function () {
     s = s + 0x6D2B79F5 | 0;
-    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    var t = Math.imul(s ^ s >>> 15, 1 | s);
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
 
 function hashString(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
+  var h = 0;
+  for (var i = 0; i < str.length; i++) {
     h = Math.imul(31, h) + str.charCodeAt(i) | 0;
   }
   return h;
 }
 
 function getTodayStr() {
-  const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  var d = new Date(Date.now() + 9 * 60 * 60 * 1000);
   return d.toISOString().slice(0, 10);
 }
 
 function getWeekId() {
-  const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const jan1 = new Date(d.getFullYear(), 0, 1);
-  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-  return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
+  var d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  var jan1 = new Date(d.getFullYear(), 0, 1);
+  var week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + (week < 10 ? '0' + week : '' + week);
 }
 
 function seededShuffle(arr, rng) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+  var a = [...arr];
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(rng() * (i + 1));
+    var tmp2 = a[i]; a[i] = a[j]; a[j] = tmp2;
   }
   return a;
 }
@@ -121,25 +121,27 @@ function seededShuffle(arr, rng) {
 // データ管理
 // ============================================================
 function getQuizData() {
-  const saved = localStorage.getItem('keiba-quiz-questions');
-  const data = saved ? safeJsonParse(saved, quizData) : quizData;
-  return data.map(q => ({
-    ...q,
-    genre: q.genre || 'general',
-    difficulty: q.difficulty || 'intermediate',
-  }));
+  var saved = localStorage.getItem('keiba-quiz-questions');
+  var data = saved ? safeJsonParse(saved, quizData) : quizData;
+  return data.map(function(q) {
+    var copy = {};
+    for (var k in q) { if (q.hasOwnProperty(k)) copy[k] = q[k]; }
+    if (!copy.genre) copy.genre = 'general';
+    if (!copy.difficulty) copy.difficulty = 'intermediate';
+    return copy;
+  });
 }
 
 function getFilteredQuizData() {
-  const all = getQuizData();
-  const settings = getSettings();
-  let filtered = all;
+  var all = getQuizData();
+  var settings = getSettings();
+  var filtered = all;
 
   if (settings.selectedGenres && settings.selectedGenres.length > 0) {
-    filtered = filtered.filter(q => settings.selectedGenres.includes(q.genre));
+    filtered = filtered.filter(function(q) { return settings.selectedGenres.indexOf(q.genre) >= 0; });
   }
   if (settings.difficulty && settings.difficulty !== 'all') {
-    filtered = filtered.filter(q => q.difficulty === settings.difficulty);
+    filtered = filtered.filter(function(q) { return q.difficulty === settings.difficulty; });
   }
   return filtered.length > 0 ? filtered : all;
 }
@@ -178,9 +180,9 @@ function totalXpForLevel(lv) {
 }
 
 function addXP(amount) {
-  const p = getPlayerData();
+  var p = getPlayerData();
   p.xp += amount;
-  let leveledUp = false;
+  var leveledUp = false;
   while (p.xp >= xpForLevel(p.level)) {
     p.xp -= xpForLevel(p.level);
     p.level++;
@@ -200,11 +202,11 @@ function getStreak() {
 }
 
 function checkStreak() {
-  const s = getStreak();
-  const today = getTodayStr();
+  var s = getStreak();
+  var today = getTodayStr();
   if (s.lastDate === today) return s;
 
-  const yesterday = new Date(Date.now() + 9 * 60 * 60 * 1000 - 86400000).toISOString().slice(0, 10);
+  var yesterday = new Date(Date.now() + 9 * 60 * 60 * 1000 - 86400000).toISOString().slice(0, 10);
   if (s.lastDate === yesterday) {
     s.currentStreak++;
   } else {
@@ -217,7 +219,7 @@ function checkStreak() {
 }
 
 function getStreakMultiplier() {
-  const s = getStreak();
+  var s = getStreak();
   return Math.min(2, 1 + s.currentStreak * 0.1);
 }
 
@@ -237,11 +239,11 @@ function saveStats(st) {
 }
 
 function recordStat(question, wasCorrect) {
-  const st = getStats();
+  var st = getStats();
   st.totalAnswered++;
   if (wasCorrect) st.totalCorrect++;
 
-  const g = question.genre || 'general';
+  var g = question.genre || 'general';
   if (!st.genres[g]) st.genres[g] = { answered: 0, correct: 0 };
   st.genres[g].answered++;
   if (wasCorrect) st.genres[g].correct++;
@@ -250,7 +252,7 @@ function recordStat(question, wasCorrect) {
 }
 
 function recordGameHistory(sc, total, acc) {
-  const st = getStats();
+  var st = getStats();
   st.history.push({
     date: getTodayStr(),
     score: sc, total: total, accuracy: acc,
@@ -267,8 +269,8 @@ function getWrongBank() {
 }
 
 function addToWrongBank(q) {
-  const bank = getWrongBank();
-  if (!bank.find(b => b.question === q.question)) {
+  var bank = getWrongBank();
+  if (!bank.find(function(b) { return b.question === q.question; })) {
     bank.push(q);
     if (bank.length > 50) bank.shift();
     localStorage.setItem('keiba-wrong-bank', JSON.stringify(bank));
@@ -276,8 +278,8 @@ function addToWrongBank(q) {
 }
 
 function removeFromWrongBank(q) {
-  let bank = getWrongBank();
-  bank = bank.filter(b => b.question !== q.question);
+  var bank = getWrongBank();
+  bank = bank.filter(function(b) { return b.question !== q.question; });
   localStorage.setItem('keiba-wrong-bank', JSON.stringify(bank));
 }
 
@@ -289,15 +291,16 @@ function getTotalCorrect() {
 }
 
 function addTotalCorrect(n) {
-  const total = getTotalCorrect() + n;
+  var total = getTotalCorrect() + n;
   localStorage.setItem('keiba-total-correct', total);
   return total;
 }
 
 function getCurrentTitle() {
-  const total = getTotalCorrect();
-  let title = TITLES[0];
-  for (const t of TITLES) {
+  var total = getTotalCorrect();
+  var title = TITLES[0];
+  for (var ti = 0; ti < TITLES.length; ti++) {
+    var t = TITLES[ti];
     if (total >= t.min) title = t;
   }
   return title;
@@ -307,44 +310,44 @@ function getCurrentTitle() {
 // スタート画面
 // ============================================================
 function updateStartScreen() {
-  const title = getCurrentTitle();
-  const total = getTotalCorrect();
-  const el = document.getElementById('player-title');
+  var title = getCurrentTitle();
+  var total = getTotalCorrect();
+  var el = document.getElementById('player-title');
   if (el) {
-    el.textContent = `${title.icon} ${title.name} `;
-    const countSpan = document.createElement('span');
+    el.textContent = title.icon + ' ' + title.name + ' ';
+    var countSpan = document.createElement('span');
     countSpan.className = 'title-count';
-    countSpan.textContent = `累計${total}問正解`;
+    countSpan.textContent = '累計' + total + '問正解';
     el.appendChild(countSpan);
   }
 
   // レベル & XP
-  const p = getPlayerData();
-  const levelEl = document.getElementById('player-level');
-  const xpFill = document.getElementById('xp-fill');
-  const xpText = document.getElementById('xp-text');
+  var p = getPlayerData();
+  var levelEl = document.getElementById('player-level');
+  var xpFill = document.getElementById('xp-fill');
+  var xpText = document.getElementById('xp-text');
   if (levelEl) levelEl.textContent = p.level;
   if (xpFill) xpFill.style.width = (p.xp / xpForLevel(p.level) * 100) + '%';
-  if (xpText) xpText.textContent = `${p.xp} / ${xpForLevel(p.level)} XP`;
+  if (xpText) xpText.textContent = p.xp + ' / ' + xpForLevel(p.level) + ' XP';
 
   // ストリーク
-  const streak = checkStreak();
-  const streakEl = document.getElementById('streak-display');
+  var streak = checkStreak();
+  var streakEl = document.getElementById('streak-display');
   if (streakEl) {
     if (streak.currentStreak >= 2) {
       streakEl.style.display = 'block';
-      streakEl.textContent = `🔥 ${streak.currentStreak}日連続`;
+      streakEl.textContent = '🔥 ' + streak.currentStreak + '日連続';
     } else {
       streakEl.style.display = 'none';
     }
   }
 
   // デイリーチャレンジ状態
-  const dailyBtn = document.getElementById('daily-btn');
+  var dailyBtn = document.getElementById('daily-btn');
   if (dailyBtn) {
-    const daily = getDailyState();
+    var daily = getDailyState();
     if (daily.completed) {
-      dailyBtn.textContent = `✅ 今日のスコア: ${daily.score}点`;
+      dailyBtn.textContent = '✅ 今日のスコア: ' + daily.score + '点';
       dailyBtn.classList.add('completed');
     } else {
       dailyBtn.textContent = '📅 デイリーチャレンジ';
@@ -353,16 +356,16 @@ function updateStartScreen() {
   }
 
   // 間違えた問題数
-  const wrongCount = getWrongBank().length;
-  const wrongBadge = document.getElementById('wrong-count');
-  const wrongBtn = document.getElementById('wrong-bank-btn');
+  var wrongCount = getWrongBank().length;
+  var wrongBadge = document.getElementById('wrong-count');
+  var wrongBtn = document.getElementById('wrong-bank-btn');
   if (wrongBadge) wrongBadge.textContent = wrongCount;
   if (wrongBtn) wrongBtn.style.display = wrongCount > 0 ? 'block' : 'none';
 
   // 設定を復元
-  const settings = getSettings();
+  var settings = getSettings();
   isHardMode = settings.hardMode || false;
-  const hardToggle = document.getElementById('hard-toggle');
+  var hardToggle = document.getElementById('hard-toggle');
   if (hardToggle) hardToggle.checked = isHardMode;
 }
 
@@ -382,8 +385,8 @@ function startQuiz() {
   isDailyMode = false;
   isBattleMode = false;
 
-  const settings = getSettings();
-  const diff = DIFFICULTY_SETTINGS[settings.difficulty] || DIFFICULTY_SETTINGS.intermediate;
+  var settings = getSettings();
+  var diff = DIFFICULTY_SETTINGS[settings.difficulty] || DIFFICULTY_SETTINGS.intermediate;
   currentTimeLimit = isHardMode ? Math.min(8, diff.time) : diff.time;
 
   shuffledQuiz = shuffleArray([...getFilteredQuizData()]);
@@ -398,19 +401,19 @@ function startQuiz() {
 }
 
 function readSettingsFromUI() {
-  const settings = getSettings();
+  var settings = getSettings();
 
   // ジャンル
-  const genreChecks = document.querySelectorAll('.genre-check');
+  var genreChecks = document.querySelectorAll('.genre-check');
   settings.selectedGenres = [];
-  genreChecks.forEach(cb => { if (cb.checked) settings.selectedGenres.push(cb.value); });
+  genreChecks.forEach(function(cb) { if (cb.checked) settings.selectedGenres.push(cb.value); });
 
   // 難易度
-  const diffRadio = document.querySelector('input[name="difficulty"]:checked');
+  var diffRadio = document.querySelector('input[name="difficulty"]:checked');
   settings.difficulty = diffRadio ? diffRadio.value : 'all';
 
   // ハードモード
-  const hardToggle = document.getElementById('hard-toggle');
+  var hardToggle = document.getElementById('hard-toggle');
   settings.hardMode = hardToggle ? hardToggle.checked : false;
   isHardMode = settings.hardMode;
 
@@ -418,13 +421,13 @@ function readSettingsFromUI() {
 }
 
 function updateModeIndicator() {
-  const el = document.getElementById('mode-indicator');
+  var el = document.getElementById('mode-indicator');
   if (!el) return;
-  const parts = [];
+  var parts = [];
   if (isHardMode) parts.push('HARD');
   if (isDailyMode) parts.push('DAILY');
   if (isBattleMode) parts.push('BATTLE');
-  const settings = getSettings();
+  var settings = getSettings();
   if (settings.difficulty && settings.difficulty !== 'all') {
     var d = DIFFICULTY_SETTINGS[settings.difficulty]; parts.push(d ? d.label : '');
   }
@@ -436,7 +439,7 @@ function updateModeIndicator() {
 // デイリーチャレンジ
 // ============================================================
 function getDailyState() {
-  const data = safeJsonParse(localStorage.getItem('keiba-daily-state'), {});
+  var data = safeJsonParse(localStorage.getItem('keiba-daily-state'), {});
   if (data.date !== getTodayStr()) return { date: getTodayStr(), completed: false, score: 0 };
   return data;
 }
@@ -446,9 +449,9 @@ function saveDailyState(state) {
 }
 
 function startDailyChallenge() {
-  const daily = getDailyState();
+  var daily = getDailyState();
   if (daily.completed) {
-    alert(`今日のチャレンジは完了済みです！\nスコア: ${daily.score}点`);
+    alert('今日のチャレンジは完了済みです！\nスコア: ' + daily.score + '点');
     return;
   }
 
@@ -464,9 +467,9 @@ function startDailyChallenge() {
   isDailyMode = true;
   isBattleMode = false;
 
-  const allQ = getQuizData();
-  const seed = hashString(getTodayStr());
-  const rng = seededRng(seed);
+  var allQ = getQuizData();
+  var seed = hashString(getTodayStr());
+  var rng = seededRng(seed);
   shuffledQuiz = seededShuffle(allQ, rng).slice(0, 5);
   prevTitleName = getCurrentTitle().name;
 
@@ -485,9 +488,9 @@ function startDailyChallenge() {
 // ============================================================
 function startBattle() {
   readSettingsFromUI();
-  const allQ = getQuizData();
+  var allQ = getQuizData();
   battleSeed = Date.now();
-  const rng = seededRng(battleSeed);
+  var rng = seededRng(battleSeed);
   shuffledQuiz = seededShuffle(allQ, rng).slice(0, 10);
 
   currentQuestion = 0;
@@ -513,8 +516,8 @@ function startBattle() {
 }
 
 function joinBattle(seed) {
-  const allQ = getQuizData();
-  const rng = seededRng(seed);
+  var allQ = getQuizData();
+  var rng = seededRng(seed);
   shuffledQuiz = seededShuffle(allQ, rng).slice(0, 10);
   battleSeed = seed;
 
@@ -541,8 +544,8 @@ function joinBattle(seed) {
 }
 
 function checkBattleFromUrl() {
-  const hash = window.location.hash;
-  const match = hash.match(/#battle=(\d+)/);
+  var hash = window.location.hash;
+  var match = hash.match(/#battle=(\d+)/);
   if (match) {
     window.location.hash = '';
     joinBattle(parseInt(match[1]));
@@ -577,7 +580,7 @@ function startReview() {
 }
 
 function startWrongBankReview() {
-  const bank = getWrongBank();
+  var bank = getWrongBank();
   if (bank.length === 0) return;
   currentQuestion = 0;
   score = 0;
@@ -607,7 +610,7 @@ function startWrongBankReview() {
 function loadQuestion() {
   answered = false;
   isBonusQuestion = false;
-  const q = shuffledQuiz[currentQuestion];
+  var q = shuffledQuiz[currentQuestion];
   document.getElementById('question-num').textContent = currentQuestion + 1;
   document.getElementById('question-text').textContent = q.question;
   document.getElementById('result-msg').textContent = '';
@@ -616,23 +619,23 @@ function loadQuestion() {
   document.getElementById('combo-label').className = 'combo-label';
 
   // 回答カードを非表示
-  const answerCard = document.getElementById('answer-card');
+  var answerCard = document.getElementById('answer-card');
   if (answerCard) {
     answerCard.style.display = 'none';
     answerCard.className = 'answer-card';
   }
-  const correctDisplay = document.getElementById('correct-answer-display');
+  var correctDisplay = document.getElementById('correct-answer-display');
   if (correctDisplay) correctDisplay.textContent = '';
 
-  const expEl = document.getElementById('explanation');
+  var expEl = document.getElementById('explanation');
   expEl.textContent = '';
   expEl.classList.remove('show');
 
-  const pct = (currentQuestion / shuffledQuiz.length) * 100;
+  var pct = (currentQuestion / shuffledQuiz.length) * 100;
   document.getElementById('progress-fill').style.width = pct + '%';
 
   // ボーナス問題判定 (15%の確率, デイリー・復習モードでは出ない)
-  const bonusEl = document.getElementById('bonus-indicator');
+  var bonusEl = document.getElementById('bonus-indicator');
   if (!isDailyMode && !isReviewMode && Math.random() < 0.15) {
     isBonusQuestion = true;
     if (bonusEl) bonusEl.style.display = 'block';
@@ -650,21 +653,21 @@ function loadQuestion() {
   // 自動読み上げ
   if (speechEnabled) speakQuestion();
 
-  const choicesEl = document.getElementById('choices');
+  var choicesEl = document.getElementById('choices');
   choicesEl.innerHTML = '';
-  const labels = ['A', 'B', 'C', 'D'];
-  const indices = shuffleArray([0, 1, 2, 3]);
+  var labels = ['A', 'B', 'C', 'D'];
+  var indices = shuffleArray([0, 1, 2, 3]);
 
-  indices.forEach((origIdx, displayIdx) => {
-    const btn = document.createElement('button');
+  indices.forEach(function(origIdx, displayIdx) {
+    var btn = document.createElement('button');
     btn.className = 'choice-btn';
-    const labelSpan = document.createElement('span');
+    var labelSpan = document.createElement('span');
     labelSpan.className = 'choice-label';
     labelSpan.textContent = labels[displayIdx];
     btn.appendChild(labelSpan);
     btn.appendChild(document.createTextNode(q.choices[origIdx]));
     btn.dataset.origIdx = origIdx;
-    btn.onclick = () => selectAnswer(btn, origIdx, q.answer, choicesEl);
+    btn.onclick = (function(b, oi) { return function() { selectAnswer(b, oi, q.answer, choicesEl); }; })(btn, origIdx);
     choicesEl.appendChild(btn);
   });
 }
@@ -672,25 +675,25 @@ function loadQuestion() {
 // ============================================================
 // タイマー
 // ============================================================
-let tickPlayed = { 3: false, 2: false, 1: false };
+var tickPlayed = { 3: false, 2: false, 1: false };
 
 function startTimer() {
   stopTimer();
   timeLeft = currentTimeLimit * 10;
   tickPlayed = { 3: false, 2: false, 1: false };
-  const fill = document.getElementById('timer-fill');
+  var fill = document.getElementById('timer-fill');
   fill.style.width = '100%';
   fill.className = 'timer-fill';
 
-  timer = setInterval(() => {
+  timer = setInterval(function() {
     timeLeft--;
-    const pct = (timeLeft / (currentTimeLimit * 10)) * 100;
+    var pct = (timeLeft / (currentTimeLimit * 10)) * 100;
     fill.style.width = pct + '%';
 
     if (pct <= 20) fill.className = 'timer-fill danger';
     else if (pct <= 50) fill.className = 'timer-fill warning';
 
-    const secLeft = Math.ceil(timeLeft / 10);
+    var secLeft = Math.ceil(timeLeft / 10);
     if (secLeft <= 3 && secLeft > 0 && !tickPlayed[secLeft] && timeLeft % 10 === 0) {
       tickPlayed[secLeft] = true;
       playSound('tick');
@@ -712,14 +715,14 @@ function onTimeUp() {
   stopTimer();
   answered = true;
 
-  const q = shuffledQuiz[currentQuestion];
+  var q = shuffledQuiz[currentQuestion];
   document.getElementById('timer-fill').classList.add('timeup');
 
-  const container = document.getElementById('choices');
-  const buttons = container.querySelectorAll('.choice-btn');
-  const msgEl = document.getElementById('result-msg');
+  var container = document.getElementById('choices');
+  var buttons = container.querySelectorAll('.choice-btn');
+  var msgEl = document.getElementById('result-msg');
 
-  buttons.forEach(b => {
+  buttons.forEach(function(b) {
     b.classList.add('disabled');
     if (parseInt(b.dataset.origIdx) === q.answer) b.classList.add('correct');
   });
@@ -746,11 +749,11 @@ function selectAnswer(btn, selected, correct, container) {
   answered = true;
   stopTimer();
 
-  const q = shuffledQuiz[currentQuestion];
-  const buttons = container.querySelectorAll('.choice-btn');
-  const msgEl = document.getElementById('result-msg');
+  var q = shuffledQuiz[currentQuestion];
+  var buttons = container.querySelectorAll('.choice-btn');
+  var msgEl = document.getElementById('result-msg');
 
-  buttons.forEach(b => {
+  buttons.forEach(function(b) {
     b.classList.add('disabled');
     if (parseInt(b.dataset.origIdx) === correct) b.classList.add('correct');
   });
@@ -764,7 +767,7 @@ function selectAnswer(btn, selected, correct, container) {
     // 復習モードで正解したら問題バンクから削除
     if (isReviewMode) removeFromWrongBank(q);
 
-    let comboText = '';
+    var comboText = '';
     if (combo >= 7) {
       comboText = 'UNSTOPPABLE!!';
       playSound('combo');
@@ -785,7 +788,7 @@ function selectAnswer(btn, selected, correct, container) {
     msgEl.className = 'result-msg correct';
 
     // スコア計算
-    let multiplier = 1;
+    var multiplier = 1;
     if (combo >= 5) multiplier = 2;
     else if (combo >= 3) multiplier = 1.5;
     if (isBonusQuestion) multiplier *= 2;
@@ -808,12 +811,12 @@ function selectAnswer(btn, selected, correct, container) {
   }
 
   if (isBonusQuestion) {
-    const bonusEl = document.getElementById('bonus-indicator');
+    var bonusEl = document.getElementById('bonus-indicator');
     if (bonusEl) bonusEl.style.display = 'none';
   }
 
   document.getElementById('current-score').parentElement.classList.add('pop');
-  setTimeout(() => document.getElementById('current-score').parentElement.classList.remove('pop'), 300);
+  setTimeout(function() { document.getElementById('current-score').parentElement.classList.remove('pop'); }, 300);
 
   showAnswerCard(q, selected === correct ? 'correct' : 'wrong');
 }
@@ -822,20 +825,20 @@ function selectAnswer(btn, selected, correct, container) {
 // コンボ表示
 // ============================================================
 function updateComboDisplay(text, multiplier) {
-  const comboDisplay = document.getElementById('combo-display');
-  const comboLabel = document.getElementById('combo-label');
+  var comboDisplay = document.getElementById('combo-display');
+  var comboLabel = document.getElementById('combo-label');
 
   if (combo >= 2) {
     comboDisplay.style.display = 'flex';
-    comboDisplay.textContent = `${combo} COMBO`;
+    comboDisplay.textContent = combo + ' COMBO';
     comboDisplay.classList.add('pop');
-    setTimeout(() => comboDisplay.classList.remove('pop'), 300);
+    setTimeout(function() { comboDisplay.classList.remove('pop'); }, 300);
   } else {
     comboDisplay.style.display = 'none';
   }
 
   if (text) {
-    comboLabel.textContent = `${text} ×${multiplier}`;
+    comboLabel.textContent = text + ' ×' + multiplier;
     comboLabel.className = 'combo-label show';
     if (combo >= 5) comboLabel.classList.add('rainbow');
   } else {
@@ -845,7 +848,7 @@ function updateComboDisplay(text, multiplier) {
 }
 
 function showAnswerCard(q, resultType) {
-  const card = document.getElementById('answer-card');
+  var card = document.getElementById('answer-card');
   if (!card) return;
 
   // カードの枠色
@@ -855,14 +858,14 @@ function showAnswerCard(q, resultType) {
   else card.classList.add('timeup-card');
 
   // 正解の選択肢を表示
-  const labels = ['A', 'B', 'C', 'D'];
-  const correctDisplay = document.getElementById('correct-answer-display');
+  var labels = ['A', 'B', 'C', 'D'];
+  var correctDisplay = document.getElementById('correct-answer-display');
   if (correctDisplay) {
-    correctDisplay.textContent = `正解: ${labels[q.answer]}. ${q.choices[q.answer]}`;
+    correctDisplay.textContent = '正解: ' + labels[q.answer] + '. ' + q.choices[q.answer];
   }
 
   // 解説
-  const expEl = document.getElementById('explanation');
+  var expEl = document.getElementById('explanation');
   if (q.explanation) {
     expEl.textContent = q.explanation;
     expEl.classList.add('show');
@@ -892,20 +895,20 @@ function nextQuestion() {
 // ============================================================
 function showResult() {
   stopTimer();
-  const finalScore = Math.floor(score);
-  const accuracy = shuffledQuiz.length > 0 ? correctCount / shuffledQuiz.length : 0;
+  var finalScore = Math.floor(score);
+  var accuracy = shuffledQuiz.length > 0 ? correctCount / shuffledQuiz.length : 0;
 
   // XP計算
-  const settings = getSettings();
+  var settings = getSettings();
   var diffSetting = DIFFICULTY_SETTINGS[settings.difficulty]; var diffMul = diffSetting ? diffSetting.xpMul : 1;
-  const streakMul = getStreakMultiplier();
-  const hardMul = isHardMode ? 1.5 : 1;
-  const baseXp = correctCount * 10;
-  const totalXp = Math.floor(baseXp * diffMul * streakMul * hardMul);
+  var streakMul = getStreakMultiplier();
+  var hardMul = isHardMode ? 1.5 : 1;
+  var baseXp = correctCount * 10;
+  var totalXp = Math.floor(baseXp * diffMul * streakMul * hardMul);
 
-  const xpResult = addXP(totalXp);
-  const total = addTotalCorrect(correctCount);
-  const title = getCurrentTitle();
+  var xpResult = addXP(totalXp);
+  var total = addTotalCorrect(correctCount);
+  var title = getCurrentTitle();
 
   // 成績記録
   recordGameHistory(finalScore, shuffledQuiz.length, accuracy);
@@ -913,25 +916,25 @@ function showResult() {
   document.getElementById('final-score').textContent = finalScore;
   document.getElementById('final-total').textContent = shuffledQuiz.length;
   document.getElementById('final-combo').textContent = maxCombo;
-  document.getElementById('final-title').textContent = `${title.icon} ${title.name}`;
+  document.getElementById('final-title').textContent = title.icon + ' ' + title.name;
 
   // XP表示
-  const xpGainedEl = document.getElementById('xp-gained');
-  if (xpGainedEl) xpGainedEl.textContent = `+${totalXp} XP`;
-  const resultLevelEl = document.getElementById('result-level');
-  if (resultLevelEl) resultLevelEl.textContent = `Lv.${xpResult.level}`;
-  const resultXpFill = document.getElementById('result-xp-fill');
+  var xpGainedEl = document.getElementById('xp-gained');
+  if (xpGainedEl) xpGainedEl.textContent = '+' + totalXp + ' XP';
+  var resultLevelEl = document.getElementById('result-level');
+  if (resultLevelEl) resultLevelEl.textContent = 'Lv.' + xpResult.level;
+  var resultXpFill = document.getElementById('result-xp-fill');
   if (resultXpFill) resultXpFill.style.width = (xpResult.xp / xpForLevel(xpResult.level) * 100) + '%';
 
   // 次の称号
-  const nextTitle = TITLES.find(t => t.min > total);
+  var nextTitle = TITLES.find(function(t) { return t.min > total; });
   document.getElementById('next-title-info').textContent = nextTitle
-    ? `次の称号「${nextTitle.name}」まであと${nextTitle.min - total}問`
+    ? '次の称号「' + nextTitle.name + '」まであと' + nextTitle.min - total + '問'
     : '最高称号達成！';
 
   // コメント
-  const pct = accuracy;
-  let comment = '';
+  var pct = accuracy;
+  var comment = '';
   if (pct === 1 && maxCombo >= shuffledQuiz.length) comment = '完全制覇！フルコンボ達成！';
   else if (pct === 1) comment = '全問正解！競馬マスター！';
   else if (pct >= 0.8) comment = 'すごい！かなりの競馬通ですね';
@@ -941,14 +944,14 @@ function showResult() {
   document.getElementById('result-comment').textContent = comment;
 
   // 正答率
-  const accEl = document.getElementById('result-accuracy');
-  if (accEl) accEl.textContent = `正答率: ${Math.round(accuracy * 100)}%`;
+  var accEl = document.getElementById('result-accuracy');
+  if (accEl) accEl.textContent = '正答率: ' + Math.round(accuracy * 100) + '%';
 
   // 復習ボタン
-  const reviewBtn = document.getElementById('review-btn');
+  var reviewBtn = document.getElementById('review-btn');
   if (wrongList.length > 0) {
     reviewBtn.style.display = 'block';
-    reviewBtn.textContent = `間違えた${wrongList.length}問を復習`;
+    reviewBtn.textContent = '間違えた' + wrongList.length + '問を復習';
   } else {
     reviewBtn.style.display = 'none';
   }
@@ -959,10 +962,10 @@ function showResult() {
   }
 
   // 対戦URL
-  const battleUrlArea = document.getElementById('battle-url-area');
+  var battleUrlArea = document.getElementById('battle-url-area');
   if (battleUrlArea) {
     if (isBattleMode && battleSeed) {
-      const url = `${window.location.origin}${window.location.pathname}#battle=${battleSeed}`;
+      var url = window.location.origin + window.location.pathname + '#battle=' + battleSeed;
       document.getElementById('battle-url').value = url;
       battleUrlArea.style.display = 'block';
     } else {
@@ -979,12 +982,12 @@ function showResult() {
 
   // レベルアップ演出
   if (xpResult.leveledUp) {
-    setTimeout(() => showLevelUpAnimation(xpResult.level), 600);
+    setTimeout(function() { showLevelUpAnimation(xpResult.level); }, 600);
   }
 
   // フルコンボ称号チェック
   if (maxCombo >= shuffledQuiz.length && shuffledQuiz.length >= 5) {
-    let specialKey = 'fullCombo';
+    var specialKey = 'fullCombo';
     if (isDailyMode) specialKey = 'dailyPerfect';
     if (isHardMode) specialKey = 'hardFullCombo';
     awardSpecialTitle(specialKey);
@@ -992,9 +995,9 @@ function showResult() {
 
   // 称号変化チェック → ガチャ演出
   if (title.name !== prevTitleName) {
-    setTimeout(() => showGachaAnimation(title), xpResult.leveledUp ? 2500 : 800);
+    setTimeout(function() { showGachaAnimation(title); }, xpResult.leveledUp ? 2500 : 800);
   } else {
-    setTimeout(() => {
+    setTimeout(function() {
       document.getElementById('name-modal').style.display = 'flex';
     }, 1200);
   }
@@ -1004,8 +1007,8 @@ function showResult() {
 // 特殊称号
 // ============================================================
 function awardSpecialTitle(key) {
-  const p = getPlayerData();
-  if (!p.specialTitles.includes(key)) {
+  var p = getPlayerData();
+  if (p.specialTitles.indexOf(key) < 0) {
     p.specialTitles.push(key);
     savePlayerData(p);
   }
@@ -1015,21 +1018,21 @@ function awardSpecialTitle(key) {
 // レベルアップ演出
 // ============================================================
 function showLevelUpAnimation(level) {
-  const overlay = document.getElementById('levelup-overlay');
+  var overlay = document.getElementById('levelup-overlay');
   if (!overlay) return;
   document.getElementById('levelup-num').textContent = level;
   overlay.style.display = 'flex';
   playSound('levelup');
-  setTimeout(() => { overlay.style.display = 'none'; }, 2000);
+  setTimeout(function() { overlay.style.display = 'none'; }, 2000);
 }
 
 // ============================================================
 // ガチャ演出
 // ============================================================
 function showGachaAnimation(title) {
-  const overlay = document.getElementById('gacha-overlay');
+  var overlay = document.getElementById('gacha-overlay');
   if (!overlay) return;
-  const card = overlay.querySelector('.gacha-card');
+  var card = overlay.querySelector('.gacha-card');
   document.getElementById('gacha-icon').textContent = title.icon;
   document.getElementById('gacha-name').textContent = title.name;
 
@@ -1037,12 +1040,12 @@ function showGachaAnimation(title) {
   card.classList.remove('flipped');
   playSound('gacha');
 
-  setTimeout(() => { card.classList.add('flipped'); }, 1000);
+  setTimeout(function() { card.classList.add('flipped'); }, 1000);
 }
 
 function closeGacha() {
   document.getElementById('gacha-overlay').style.display = 'none';
-  setTimeout(() => {
+  setTimeout(function() {
     document.getElementById('name-modal').style.display = 'flex';
   }, 300);
 }
@@ -1051,17 +1054,17 @@ function closeGacha() {
 // ランキング
 // ============================================================
 function submitScore() {
-  const name = document.getElementById('nickname-input').value.trim();
+  var name = document.getElementById('nickname-input').value.trim();
   if (!name) return;
 
-  const title = getCurrentTitle();
-  const rankings = getRankings();
+  var title = getCurrentTitle();
+  var rankings = getRankings();
   rankings.push({
     name, score: Math.floor(score), total: shuffledQuiz.length,
     combo: maxCombo, title: title.icon,
     date: new Date().toLocaleDateString('ja-JP'),
   });
-  rankings.sort((a, b) => b.score - a.score);
+  rankings.sort(function(a, b) { return b.score - a.score; });
   localStorage.setItem('keiba-quiz-rankings', JSON.stringify(rankings.slice(0, 50)));
 
   document.getElementById('name-modal').style.display = 'none';
@@ -1078,27 +1081,27 @@ function getRankings() {
 
 // 週間ランキング
 function getWeeklyRankings() {
-  const data = safeJsonParse(localStorage.getItem('keiba-weekly-rankings'), { weekId: '', entries: [] });
+  var data = safeJsonParse(localStorage.getItem('keiba-weekly-rankings'), { weekId: '', entries: [] });
   if (data.weekId !== getWeekId()) return { weekId: getWeekId(), entries: [] };
   return data;
 }
 
 function saveWeeklyScore(sc) {
-  const data = getWeeklyRankings();
+  var data = getWeeklyRankings();
   data.weekId = getWeekId();
-  const name = localStorage.getItem('keiba-last-name') || '';
+  var name = localStorage.getItem('keiba-last-name') || '';
   if (name) {
     data.entries.push({
       name, score: sc, date: new Date().toLocaleDateString('ja-JP'),
     });
-    data.entries.sort((a, b) => b.score - a.score);
+    data.entries.sort(function(a, b) { return b.score - a.score; });
     data.entries = data.entries.slice(0, 50);
   }
   localStorage.setItem('keiba-weekly-rankings', JSON.stringify(data));
 }
 
 // ランキング表示
-let rankingTab = 'all';
+var rankingTab = 'all';
 
 function showRanking() {
   rankingTab = 'all';
@@ -1108,49 +1111,49 @@ function showRanking() {
 
 function switchRankingTab(tab) {
   rankingTab = tab;
-  const allBtn = document.getElementById('rank-tab-all');
-  const weekBtn = document.getElementById('rank-tab-week');
+  var allBtn = document.getElementById('rank-tab-all');
+  var weekBtn = document.getElementById('rank-tab-week');
   if (allBtn) allBtn.classList.toggle('active', tab === 'all');
   if (weekBtn) weekBtn.classList.toggle('active', tab === 'week');
   renderRanking();
 }
 
 function renderRanking() {
-  const rankings = rankingTab === 'all' ? getRankings() : getWeeklyRankings().entries;
-  const listEl = document.getElementById('ranking-list');
+  var rankings = rankingTab === 'all' ? getRankings() : getWeeklyRankings().entries;
+  var listEl = document.getElementById('ranking-list');
   listEl.innerHTML = '';
 
   if (rankings.length === 0) {
-    const p = document.createElement('p');
+    var p = document.createElement('p');
     p.style.cssText = 'text-align:center;color:#8faa8b;padding:40px 0;';
     p.textContent = 'まだランキングデータがありません';
     listEl.appendChild(p);
     return;
   }
 
-  rankings.slice(0, 20).forEach((r, i) => {
-    const item = document.createElement('div');
+  rankings.slice(0, 20).forEach(function(r, i) {
+    var item = document.createElement('div');
     item.className = 'ranking-item';
-    let numClass = 'normal';
+    var numClass = 'normal';
     if (i === 0) numClass = 'gold';
     else if (i === 1) numClass = 'silver';
     else if (i === 2) numClass = 'bronze';
 
-    const numDiv = document.createElement('div');
-    numDiv.className = `ranking-num ${numClass}`;
+    var numDiv = document.createElement('div');
+    numDiv.className = 'ranking-num ' + numClass;
     numDiv.textContent = i + 1;
 
-    const nameDiv = document.createElement('div');
+    var nameDiv = document.createElement('div');
     nameDiv.className = 'ranking-name';
-    nameDiv.textContent = `${r.title || '🐴'} ${r.name}`;
+    nameDiv.textContent = r.title || '🐴' + ' ' + r.name;
 
-    const scoreDiv = document.createElement('div');
+    var scoreDiv = document.createElement('div');
     scoreDiv.className = 'ranking-score';
     scoreDiv.textContent = r.score;
     if (r.total) {
-      const totalSpan = document.createElement('span');
+      var totalSpan = document.createElement('span');
       totalSpan.className = 'ranking-total';
-      totalSpan.textContent = `/${r.total}`;
+      totalSpan.textContent = '/' + r.total;
       scoreDiv.appendChild(totalSpan);
     }
 
@@ -1165,47 +1168,47 @@ function renderRanking() {
 // 成績画面
 // ============================================================
 function showStatsScreen() {
-  const st = getStats();
-  const p = getPlayerData();
+  var st = getStats();
+  var p = getPlayerData();
 
   // 全体
-  const overallEl = document.getElementById('overall-stats');
+  var overallEl = document.getElementById('overall-stats');
   if (overallEl) {
-    const acc = st.totalAnswered > 0 ? Math.round(st.totalCorrect / st.totalAnswered * 100) : 0;
-    overallEl.innerHTML = `
-      <div class="stat-card"><div class="stat-num">${st.totalAnswered}</div><div class="stat-label">解答数</div></div>
-      <div class="stat-card"><div class="stat-num">${acc}%</div><div class="stat-label">正答率</div></div>
-      <div class="stat-card"><div class="stat-num">Lv.${p.level}</div><div class="stat-label">レベル</div></div>
-      <div class="stat-card"><div class="stat-num">${getStreak().bestStreak}</div><div class="stat-label">最長連続</div></div>
-    `;
+    var acc = st.totalAnswered > 0 ? Math.round(st.totalCorrect / st.totalAnswered * 100) : 0;
+    overallEl.innerHTML = '<div class="stat-card"><div class="stat-num">' + st.totalAnswered + '</div><div class="stat-label">解答数</div></div>' +
+      '<div class="stat-card"><div class="stat-num">' + acc + '%</div><div class="stat-label">正答率</div></div>' +
+      '<div class="stat-card"><div class="stat-num">Lv.' + p.level + '</div><div class="stat-label">レベル</div></div>' +
+      '<div class="stat-card"><div class="stat-num">' + getStreak().bestStreak + '</div><div class="stat-label">最長連続</div></div>';
   }
 
   // ジャンル別
-  const genreEl = document.getElementById('genre-stats');
+  var genreEl = document.getElementById('genre-stats');
   if (genreEl) {
-    let html = '';
-    for (const [key, label] of Object.entries(GENRES)) {
-      const g = st.genres[key];
+    var html = '';
+    var genreKeys = Object.keys(GENRES);
+    for (var gi = 0; gi < genreKeys.length; gi++) {
+      var key = genreKeys[gi];
+      var label = GENRES[key];
+      var g = st.genres[key];
       if (!g || g.answered === 0) continue;
-      const acc = Math.round(g.correct / g.answered * 100);
-      html += `
-        <div class="genre-stat-row">
-          <span class="genre-stat-name">${label}</span>
-          <div class="genre-stat-bar"><div class="genre-stat-fill" style="width:${acc}%"></div></div>
-          <span class="genre-stat-pct">${acc}%</span>
-        </div>
-      `;
+      var acc = Math.round(g.correct / g.answered * 100);
+      html += '<div class="genre-stat-row">' +
+        '<span class="genre-stat-name">' + label + '</span>' +
+        '<div class="genre-stat-bar"><div class="genre-stat-fill" style="width:' + acc + '%"></div></div>' +
+        '<span class="genre-stat-pct">' + acc + '%</span>' +
+        '</div>';
     }
     genreEl.innerHTML = html || '<p style="color:#8faa8b;text-align:center;">まだデータがありません</p>';
   }
 
   // 特殊称号
-  const specialEl = document.getElementById('special-titles');
+  var specialEl = document.getElementById('special-titles');
   if (specialEl) {
-    let html = '';
-    for (const key of p.specialTitles) {
-      const t = SPECIAL_TITLES[key];
-      if (t) html += `<span class="special-title-badge">${t.icon} ${t.name}</span>`;
+    var html = '';
+    for (var si = 0; si < p.specialTitles.length; si++) {
+      var key = p.specialTitles[si];
+      var t = SPECIAL_TITLES[key];
+      if (t) html += '<span class="special-title-badge">' + t.icon + ' ' + t.name + '</span>';
     }
     specialEl.innerHTML = html || '<p style="color:#8faa8b;font-size:13px;">まだ獲得した特殊称号はありません</p>';
   }
@@ -1217,10 +1220,10 @@ function showStatsScreen() {
 // シェア（スコアカード画像生成）
 // ============================================================
 function shareResult() {
-  generateScoreCard().then(blob => {
+  generateScoreCard().then(function(blob) {
     if (blob && navigator.share && navigator.canShare) {
-      const file = new File([blob], 'keiba-quiz-score.png', { type: 'image/png' });
-      const shareData = { files: [file], text: getShareText() };
+      var file = new File([blob], 'keiba-quiz-score.png', { type: 'image/png' });
+      var shareData = { files: [file], text: getShareText() };
       if (navigator.canShare(shareData)) {
         navigator.share(shareData);
         return;
@@ -1230,22 +1233,22 @@ function shareResult() {
     if (navigator.share) {
       navigator.share({ text: getShareText() });
     } else {
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText())}`, '_blank');
+      window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(getShareText()), '_blank');
     }
   });
 }
 
 function getShareText() {
-  const title = getCurrentTitle();
-  return `${title.icon}競馬クイズ${title.icon}\nスコア: ${Math.floor(score)}/${shuffledQuiz.length}\n最大コンボ: ${maxCombo}\n称号: ${title.name}\n\nあなたも挑戦してみて！`;
+  var title = getCurrentTitle();
+  return title.icon + '競馬クイズ' + title.icon + '\nスコア: ' + Math.floor(score) + '/' + shuffledQuiz.length + '\n最大コンボ: ' + maxCombo + '\n称号: ' + title.name + '\n\nあなたも挑戦してみて！';
 }
 
 function generateScoreCard() {
-  return document.fonts.ready.then(() => {
-    const canvas = document.createElement('canvas');
+  return document.fonts.ready.then(function() {
+    var canvas = document.createElement('canvas');
     canvas.width = 1200;
     canvas.height = 630;
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
 
     // 背景
     ctx.fillStyle = '#1b3a2d';
@@ -1269,37 +1272,37 @@ function generateScoreCard() {
 
     ctx.font = '400 36px "Noto Sans JP", sans-serif';
     ctx.fillStyle = '#8faa8b';
-    ctx.fillText(`/ ${shuffledQuiz.length}問中`, 600, 310);
+    ctx.fillText('/ ' + shuffledQuiz.length + '問中', 600, 310);
 
     // コンボ
     ctx.font = '700 32px "Noto Sans JP", sans-serif';
     ctx.fillStyle = '#f39c12';
-    ctx.fillText(`最大コンボ: ${maxCombo}`, 600, 380);
+    ctx.fillText('最大コンボ: ' + maxCombo, 600, 380);
 
     // 称号
-    const title = getCurrentTitle();
+    var title = getCurrentTitle();
     ctx.font = '900 40px "Noto Sans JP", sans-serif';
     ctx.fillStyle = '#f0ece2';
-    ctx.fillText(`${title.icon} ${title.name}`, 600, 450);
+    ctx.fillText(title.icon + ' ' + title.name, 600, 450);
 
     // レベル
-    const p = getPlayerData();
+    var p = getPlayerData();
     ctx.font = '700 28px "Noto Sans JP", sans-serif';
     ctx.fillStyle = '#8faa8b';
-    ctx.fillText(`Lv.${p.level}`, 600, 510);
+    ctx.fillText('Lv.' + p.level, 600, 510);
 
     // 正答率
-    const acc = shuffledQuiz.length > 0 ? Math.round(correctCount / shuffledQuiz.length * 100) : 0;
-    ctx.fillText(`正答率: ${acc}%`, 600, 560);
+    var acc = shuffledQuiz.length > 0 ? Math.round(correctCount / shuffledQuiz.length * 100) : 0;
+    ctx.fillText('正答率: ' + acc + '%', 600, 560);
 
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    return new Promise(function(resolve) { canvas.toBlob(resolve, 'image/png'); });
   });
 }
 
 function downloadScoreCard() {
-  generateScoreCard().then(blob => {
+  generateScoreCard().then(function(blob) {
     if (!blob) return;
-    const a = document.createElement('a');
+    var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'keiba-quiz-score.png';
     a.click();
@@ -1311,11 +1314,11 @@ function downloadScoreCard() {
 // 対戦URL コピー
 // ============================================================
 function copyBattleUrl() {
-  const input = document.getElementById('battle-url');
+  var input = document.getElementById('battle-url');
   if (input) {
-    navigator.clipboard.writeText(input.value).then(() => {
-      const btn = document.getElementById('copy-battle-btn');
-      if (btn) { btn.textContent = 'コピー済み！'; setTimeout(() => btn.textContent = 'URLをコピー', 2000); }
+    navigator.clipboard.writeText(input.value).then(function() {
+      var btn = document.getElementById('copy-battle-btn');
+      if (btn) { btn.textContent = 'コピー済み！'; setTimeout(function() { btn.textContent = 'URLをコピー'; }, 2000); }
     });
   }
 }
@@ -1370,45 +1373,217 @@ function speakAnswer(q, wasCorrect) {
 }
 
 // ============================================================
-// 掲示板機能
+// タブ切り替え
 // ============================================================
-var boardLastDoc = null;
+function switchMainTab(tabName) {
+  var tabs = document.querySelectorAll('.main-tab');
+  var contents = document.querySelectorAll('.tab-content');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.remove('active');
+  }
+  for (var i = 0; i < contents.length; i++) {
+    contents[i].classList.remove('active');
+  }
+  document.getElementById('tab-' + tabName).classList.add('active');
+  document.getElementById('tab-' + tabName + '-content').classList.add('active');
 
-function showBoard() {
-  boardLastDoc = null;
-  var postsEl = document.getElementById('board-posts');
-  if (postsEl) postsEl.innerHTML = '';
-  loadBoardPosts();
-  showScreen('board-screen');
+  if (tabName === 'board') {
+    loadThreadList();
+  }
 }
 
-function loadBoardPosts() {
+// ============================================================
+// 掲示板機能（スレッド式）
+// ============================================================
+var threadLastDoc = null;
+var currentThreadId = null;
+var replyLastDoc = null;
+
+function formatDate(ts) {
+  var date = ts ? ts.toDate() : new Date();
+  return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+}
+
+// --- スレッド一覧 ---
+function loadThreadList() {
   if (!db) {
-    var postsEl = document.getElementById('board-posts');
-    if (postsEl) postsEl.innerHTML = '<p class="board-empty">掲示板は現在準備中です</p>';
+    var el = document.getElementById('thread-list');
+    if (el) el.innerHTML = '<p class="board-empty">掲示板は現在準備中です</p>';
     return;
   }
 
-  var query = db.collection('posts').orderBy('createdAt', 'desc').limit(20);
-  if (boardLastDoc) query = query.startAfter(boardLastDoc);
+  threadLastDoc = null;
+  var el = document.getElementById('thread-list');
+  if (el) el.innerHTML = '';
+  loadThreads();
+}
+
+function loadThreads() {
+  if (!db) return;
+
+  var query = db.collection('threads').orderBy('lastReplyAt', 'desc').limit(20);
+  if (threadLastDoc) query = query.startAfter(threadLastDoc);
 
   query.get().then(function(snapshot) {
-    var postsEl = document.getElementById('board-posts');
-    if (!postsEl) return;
+    var el = document.getElementById('thread-list');
+    if (!el) return;
 
-    if (snapshot.empty && !boardLastDoc) {
-      postsEl.innerHTML = '<p class="board-empty">まだ投稿がありません。最初の投稿をしよう！</p>';
+    if (snapshot.empty && !threadLastDoc) {
+      el.innerHTML = '<p class="board-empty">まだスレッドがありません。最初のスレッドを作ろう！</p>';
       return;
     }
 
     snapshot.forEach(function(doc) {
       var data = doc.data();
-      boardLastDoc = doc;
+      threadLastDoc = doc;
+
+      var item = document.createElement('div');
+      item.className = 'thread-item';
+      item.setAttribute('data-id', doc.id);
+
+      var title = document.createElement('div');
+      title.className = 'thread-item-title';
+      title.textContent = data.title || '無題';
+
+      var meta = document.createElement('div');
+      meta.className = 'thread-item-meta';
+
+      var info = document.createElement('span');
+      info.textContent = (data.name || '名無し') + ' · ' + formatDate(data.createdAt);
+
+      var replies = document.createElement('span');
+      replies.className = 'thread-item-replies';
+      replies.textContent = (data.replyCount || 0) + '件の返信';
+
+      meta.appendChild(info);
+      meta.appendChild(replies);
+
+      item.appendChild(title);
+      item.appendChild(meta);
+      el.appendChild(item);
+
+      item.addEventListener('click', function() {
+        openThread(doc.id, data);
+      });
+    });
+
+    var loadMore = document.getElementById('thread-load-more');
+    if (loadMore) {
+      loadMore.style.display = snapshot.size >= 20 ? 'block' : 'none';
+    }
+  }).catch(function(err) {
+    console.error('スレッド読み込みエラー:', err);
+    var el = document.getElementById('thread-list');
+    if (el) el.innerHTML = '<p class="board-empty">読み込みに失敗しました</p>';
+  });
+}
+
+// --- スレッド作成 ---
+function showNewThreadModal() {
+  var modal = document.getElementById('thread-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function hideNewThreadModal() {
+  var modal = document.getElementById('thread-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function createThread() {
+  if (!db) { alert('掲示板は現在準備中です'); return; }
+
+  var titleEl = document.getElementById('thread-title-input');
+  var nameEl = document.getElementById('thread-name-input');
+  var bodyEl = document.getElementById('thread-body-input');
+
+  var title = titleEl ? titleEl.value.trim() : '';
+  var name = nameEl ? nameEl.value.trim() : '';
+  var body = bodyEl ? bodyEl.value.trim() : '';
+
+  if (!title) { alert('タイトルを入力してください'); return; }
+  if (!name) { alert('ニックネームを入力してください'); return; }
+  if (!body) { alert('本文を入力してください'); return; }
+
+  var btn = document.getElementById('thread-create-btn');
+  if (btn) btn.disabled = true;
+
+  var now = firebase.firestore.FieldValue.serverTimestamp();
+  db.collection('threads').add({
+    title: title,
+    name: name,
+    body: body,
+    createdAt: now,
+    lastReplyAt: now,
+    replyCount: 0
+  }).then(function() {
+    if (titleEl) titleEl.value = '';
+    if (bodyEl) bodyEl.value = '';
+    if (btn) btn.disabled = false;
+    hideNewThreadModal();
+    loadThreadList();
+  }).catch(function(err) {
+    if (btn) btn.disabled = false;
+    alert('作成に失敗しました: ' + err.message);
+  });
+}
+
+// --- スレッド詳細 ---
+function openThread(threadId, data) {
+  currentThreadId = threadId;
+  replyLastDoc = null;
+
+  var headerEl = document.getElementById('thread-header');
+  if (headerEl) {
+    headerEl.innerHTML = '';
+    var title = document.createElement('div');
+    title.className = 'thread-detail-title';
+    title.textContent = data.title || '無題';
+
+    var body = document.createElement('div');
+    body.className = 'thread-detail-body';
+    body.textContent = data.body || '';
+
+    var meta = document.createElement('div');
+    meta.className = 'thread-detail-meta';
+    meta.textContent = (data.name || '名無し') + ' · ' + formatDate(data.createdAt);
+
+    headerEl.appendChild(title);
+    headerEl.appendChild(body);
+    headerEl.appendChild(meta);
+  }
+
+  var repliesEl = document.getElementById('thread-replies');
+  if (repliesEl) repliesEl.innerHTML = '';
+
+  loadReplies();
+  showScreen('thread-screen');
+}
+
+function loadReplies() {
+  if (!db || !currentThreadId) return;
+
+  var query = db.collection('threads').doc(currentThreadId)
+    .collection('replies').orderBy('createdAt', 'asc').limit(50);
+  if (replyLastDoc) query = query.startAfter(replyLastDoc);
+
+  query.get().then(function(snapshot) {
+    var el = document.getElementById('thread-replies');
+    if (!el) return;
+
+    if (snapshot.empty && !replyLastDoc) {
+      el.innerHTML = '<p class="board-empty">まだ返信がありません</p>';
+    }
+
+    snapshot.forEach(function(doc) {
+      var data = doc.data();
+      replyLastDoc = doc;
+
+      // 最初に「まだ返信がありません」があれば消す
+      var emptyMsg = el.querySelector('.board-empty');
+      if (emptyMsg) emptyMsg.remove();
+
       var item = document.createElement('div');
       item.className = 'board-post-item';
-
-      var date = data.createdAt ? data.createdAt.toDate() : new Date();
-      var dateStr = date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
 
       var header = document.createElement('div');
       header.className = 'board-post-header';
@@ -1419,7 +1594,7 @@ function loadBoardPosts() {
 
       var dateEl = document.createElement('span');
       dateEl.className = 'board-post-date';
-      dateEl.textContent = dateStr;
+      dateEl.textContent = formatDate(data.createdAt);
 
       header.appendChild(nameEl);
       header.appendChild(dateEl);
@@ -1430,50 +1605,63 @@ function loadBoardPosts() {
 
       item.appendChild(header);
       item.appendChild(body);
-      postsEl.appendChild(item);
+      el.appendChild(item);
     });
 
-    var loadMore = document.getElementById('board-load-more');
+    var loadMore = document.getElementById('reply-load-more');
     if (loadMore) {
-      loadMore.style.display = snapshot.size >= 20 ? 'block' : 'none';
+      loadMore.style.display = snapshot.size >= 50 ? 'block' : 'none';
     }
   }).catch(function(err) {
-    console.error('掲示板読み込みエラー:', err);
+    console.error('返信読み込みエラー:', err);
   });
 }
 
-function postToBoard() {
-  if (!db) {
-    alert('掲示板は現在準備中です');
-    return;
-  }
+function postReply() {
+  if (!db || !currentThreadId) { alert('掲示板は現在準備中です'); return; }
 
-  var nameEl = document.getElementById('board-name');
-  var msgEl = document.getElementById('board-message');
+  var nameEl = document.getElementById('reply-name');
+  var msgEl = document.getElementById('reply-message');
   var name = nameEl ? nameEl.value.trim() : '';
   var message = msgEl ? msgEl.value.trim() : '';
 
   if (!name) { alert('ニックネームを入力してください'); return; }
   if (!message) { alert('メッセージを入力してください'); return; }
 
-  var btn = document.getElementById('board-post-btn');
+  var btn = document.getElementById('reply-post-btn');
   if (btn) btn.disabled = true;
 
-  db.collection('posts').add({
+  var batch = db.batch();
+  var replyRef = db.collection('threads').doc(currentThreadId).collection('replies').doc();
+  batch.set(replyRef, {
     name: name,
     message: message,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function() {
+  });
+
+  var threadRef = db.collection('threads').doc(currentThreadId);
+  batch.update(threadRef, {
+    lastReplyAt: firebase.firestore.FieldValue.serverTimestamp(),
+    replyCount: firebase.firestore.FieldValue.increment(1)
+  });
+
+  batch.commit().then(function() {
     if (msgEl) msgEl.value = '';
     if (btn) btn.disabled = false;
-    boardLastDoc = null;
-    var postsEl = document.getElementById('board-posts');
-    if (postsEl) postsEl.innerHTML = '';
-    loadBoardPosts();
+    replyLastDoc = null;
+    var el = document.getElementById('thread-replies');
+    if (el) el.innerHTML = '';
+    loadReplies();
   }).catch(function(err) {
     if (btn) btn.disabled = false;
     alert('投稿に失敗しました: ' + err.message);
   });
+}
+
+function backFromThread() {
+  currentThreadId = null;
+  showScreen('start-screen');
+  switchMainTab('board');
 }
 
 // ============================================================
@@ -1519,11 +1707,18 @@ function initEvents() {
   // ガチャ
   bind('close-gacha-btn', closeGacha);
 
-  // 掲示板
-  bind('board-btn', showBoard);
-  bind('board-post-btn', postToBoard);
-  bind('board-load-more', loadBoardPosts);
-  bind('board-back-btn', backToStart);
+  // メインタブ
+  bind('tab-quiz', function() { switchMainTab('quiz'); });
+  bind('tab-board', function() { switchMainTab('board'); });
+
+  // 掲示板（スレッド式）
+  bind('new-thread-btn', showNewThreadModal);
+  bind('thread-create-btn', createThread);
+  bind('thread-cancel-btn', hideNewThreadModal);
+  bind('thread-load-more', loadThreads);
+  bind('thread-back-btn', backFromThread);
+  bind('reply-post-btn', postReply);
+  bind('reply-load-more', loadReplies);
 
   // 読み上げ
   bind('speak-btn', speakQuestion);

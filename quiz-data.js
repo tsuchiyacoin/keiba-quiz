@@ -1,4 +1,4 @@
-const quizData = [
+var quizData = [
   {
     question: "日本ダービー（東京優駿）が行われる競馬場はどこ？",
     choices: ["中山競馬場", "阪神競馬場", "東京競馬場", "京都競馬場"],
