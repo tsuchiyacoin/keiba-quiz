@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>競馬クイズ</title>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
@@ -61,6 +61,13 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
+          <div class="setting-group">
+            <label class="setting-label">読み上げ機能</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="speech-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
       </details>
 
@@ -70,6 +77,7 @@
         </button>
         <button id="ranking-btn" class="btn-secondary">ランキング</button>
         <button id="stats-btn" class="btn-secondary">成績を見る</button>
+        <button id="board-btn" class="btn-board">💬 掲示板</button>
       </div>
     </div>
   </div>
@@ -96,6 +104,7 @@
       <div class="question-area">
         <div id="bonus-indicator" class="bonus-indicator" style="display:none;">BONUS ×2</div>
         <p id="question-text" class="question-text"></p>
+        <button id="speak-btn" class="speak-btn" style="display:none;">🔊</button>
       </div>
       <div id="choices" class="choices"></div>
 
@@ -172,6 +181,21 @@
     </div>
   </div>
 
+  <!-- 掲示板画面 -->
+  <div id="board-screen" class="screen">
+    <div class="board-container">
+      <h2 class="board-title">💬 掲示板</h2>
+      <div class="board-post-form">
+        <input type="text" id="board-name" class="board-input" maxlength="10" placeholder="ニックネーム">
+        <textarea id="board-message" class="board-textarea" maxlength="200" placeholder="メッセージを入力（200文字まで）"></textarea>
+        <button id="board-post-btn" class="btn-primary">投稿する</button>
+      </div>
+      <div id="board-posts" class="board-posts"></div>
+      <button id="board-load-more" class="btn-secondary" style="display:none;">もっと読み込む</button>
+      <button id="board-back-btn" class="btn-secondary">戻る</button>
+    </div>
+  </div>
+
   <!-- 名前入力モーダル -->
   <div id="name-modal" class="modal" style="display:none;">
     <div class="modal-content">
@@ -211,8 +235,11 @@
   <script>
     window.onerror=function(m,u,l){var e=document.getElementById('err-log');if(e){e.style.display='block';e.textContent+=m+' (line:'+l+')\n';}};
   </script>
-  <script src="quiz-data.js?v=6"></script>
-  <script src="sounds.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js?v=7"></script>
+  <script src="quiz-data.js?v=7"></script>
+  <script src="sounds.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -641,7 +641,14 @@ function loadQuestion() {
     if (bonusEl) bonusEl.style.display = 'none';
   }
 
+  // 読み上げボタン表示
+  var speakBtn = document.getElementById('speak-btn');
+  if (speakBtn) speakBtn.style.display = speechEnabled ? 'block' : 'none';
+
   startTimer();
+
+  // 自動読み上げ
+  if (speechEnabled) speakQuestion();
 
   const choicesEl = document.getElementById('choices');
   choicesEl.innerHTML = '';
@@ -862,7 +869,10 @@ function showAnswerCard(q, resultType) {
   }
 
   card.style.display = 'block';
-  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+  setTimeout(function() { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+
+  // 正解読み上げ
+  speakAnswer(q, resultType === 'correct');
 }
 
 // ============================================================
@@ -1324,6 +1334,149 @@ function backToStart() {
 }
 
 // ============================================================
+// 読み上げ機能
+// ============================================================
+var speechEnabled = false;
+
+function speakText(text) {
+  if (!speechEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  u.rate = 1.0;
+  window.speechSynthesis.speak(u);
+}
+
+function speakQuestion() {
+  if (!speechEnabled) return;
+  var q = shuffledQuiz[currentQuestion];
+  if (!q) return;
+  var labels = ['A', 'B', 'C', 'D'];
+  var text = q.question + '。';
+  q.choices.forEach(function(c, i) {
+    text += labels[i] + '、' + c + '。';
+  });
+  speakText(text);
+}
+
+function speakAnswer(q, wasCorrect) {
+  if (!speechEnabled) return;
+  var labels = ['A', 'B', 'C', 'D'];
+  var text = wasCorrect ? '正解！' : '不正解。';
+  text += '答えは、' + labels[q.answer] + '、' + q.choices[q.answer] + '。';
+  if (q.explanation) text += q.explanation;
+  speakText(text);
+}
+
+// ============================================================
+// 掲示板機能
+// ============================================================
+var boardLastDoc = null;
+
+function showBoard() {
+  boardLastDoc = null;
+  var postsEl = document.getElementById('board-posts');
+  if (postsEl) postsEl.innerHTML = '';
+  loadBoardPosts();
+  showScreen('board-screen');
+}
+
+function loadBoardPosts() {
+  if (!db) {
+    var postsEl = document.getElementById('board-posts');
+    if (postsEl) postsEl.innerHTML = '<p class="board-empty">掲示板は現在準備中です</p>';
+    return;
+  }
+
+  var query = db.collection('posts').orderBy('createdAt', 'desc').limit(20);
+  if (boardLastDoc) query = query.startAfter(boardLastDoc);
+
+  query.get().then(function(snapshot) {
+    var postsEl = document.getElementById('board-posts');
+    if (!postsEl) return;
+
+    if (snapshot.empty && !boardLastDoc) {
+      postsEl.innerHTML = '<p class="board-empty">まだ投稿がありません。最初の投稿をしよう！</p>';
+      return;
+    }
+
+    snapshot.forEach(function(doc) {
+      var data = doc.data();
+      boardLastDoc = doc;
+      var item = document.createElement('div');
+      item.className = 'board-post-item';
+
+      var date = data.createdAt ? data.createdAt.toDate() : new Date();
+      var dateStr = date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'});
+
+      var header = document.createElement('div');
+      header.className = 'board-post-header';
+
+      var nameEl = document.createElement('span');
+      nameEl.className = 'board-post-name';
+      nameEl.textContent = data.name || '名無し';
+
+      var dateEl = document.createElement('span');
+      dateEl.className = 'board-post-date';
+      dateEl.textContent = dateStr;
+
+      header.appendChild(nameEl);
+      header.appendChild(dateEl);
+
+      var body = document.createElement('div');
+      body.className = 'board-post-body';
+      body.textContent = data.message || '';
+
+      item.appendChild(header);
+      item.appendChild(body);
+      postsEl.appendChild(item);
+    });
+
+    var loadMore = document.getElementById('board-load-more');
+    if (loadMore) {
+      loadMore.style.display = snapshot.size >= 20 ? 'block' : 'none';
+    }
+  }).catch(function(err) {
+    console.error('掲示板読み込みエラー:', err);
+  });
+}
+
+function postToBoard() {
+  if (!db) {
+    alert('掲示板は現在準備中です');
+    return;
+  }
+
+  var nameEl = document.getElementById('board-name');
+  var msgEl = document.getElementById('board-message');
+  var name = nameEl ? nameEl.value.trim() : '';
+  var message = msgEl ? msgEl.value.trim() : '';
+
+  if (!name) { alert('ニックネームを入力してください'); return; }
+  if (!message) { alert('メッセージを入力してください'); return; }
+
+  var btn = document.getElementById('board-post-btn');
+  if (btn) btn.disabled = true;
+
+  db.collection('posts').add({
+    name: name,
+    message: message,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    if (msgEl) msgEl.value = '';
+    if (btn) btn.disabled = false;
+    boardLastDoc = null;
+    var postsEl = document.getElementById('board-posts');
+    if (postsEl) postsEl.innerHTML = '';
+    loadBoardPosts();
+  }).catch(function(err) {
+    if (btn) btn.disabled = false;
+    alert('投稿に失敗しました: ' + err.message);
+  });
+}
+
+// ============================================================
 // イベントリスナー登録
 // ============================================================
 function bind(id, fn) {
@@ -1365,6 +1518,21 @@ function initEvents() {
 
   // ガチャ
   bind('close-gacha-btn', closeGacha);
+
+  // 掲示板
+  bind('board-btn', showBoard);
+  bind('board-post-btn', postToBoard);
+  bind('board-load-more', loadBoardPosts);
+  bind('board-back-btn', backToStart);
+
+  // 読み上げ
+  bind('speak-btn', speakQuestion);
+  var speechToggle = document.getElementById('speech-toggle');
+  if (speechToggle) {
+    speechToggle.addEventListener('change', function() {
+      speechEnabled = speechToggle.checked;
+    });
+  }
 }
 
 // ============================================================

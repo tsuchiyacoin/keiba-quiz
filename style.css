@@ -573,6 +573,78 @@ body {
   animation: pulse 1.5s infinite;
 }
 
+/* ========== 読み上げボタン ========== */
+.speak-btn {
+  position: absolute; top: 12px; right: 12px;
+  width: 36px; height: 36px; border: none; border-radius: 50%;
+  background: rgba(212, 175, 55, 0.2); color: #d4af37;
+  font-size: 18px; cursor: pointer; line-height: 36px;
+  text-align: center; padding: 0;
+}
+.speak-btn:active { transform: scale(0.9); }
+.question-area { position: relative; }
+
+/* ========== 掲示板ボタン ========== */
+.btn-board {
+  width: 100%; padding: 15px; font-size: 16px; font-weight: 700;
+  border: 2px solid #9b59b6; border-radius: 10px;
+  background: rgba(155, 89, 182, 0.1); color: #9b59b6;
+  cursor: pointer; margin-bottom: 10px; transition: transform 0.1s;
+}
+.btn-board:active { transform: scale(0.97); }
+
+/* ========== 掲示板画面 ========== */
+.board-container {
+  width: 100%; max-width: 420px; margin: 0 auto; padding: 0 4px;
+}
+.board-title {
+  text-align: center; font-size: 22px; font-weight: 900;
+  margin-bottom: 16px; color: #d4af37;
+}
+.board-post-form {
+  background: #244535; border-radius: 12px;
+  padding: 16px; margin-bottom: 16px;
+}
+.board-input {
+  width: 100%; padding: 10px 12px; font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: 2px solid #3d6b4f; border-radius: 8px;
+  background: #1b3a2d; color: #f0ece2;
+  outline: none; margin-bottom: 8px;
+}
+.board-input:focus, .board-textarea:focus { border-color: #d4af37; }
+.board-textarea {
+  width: 100%; padding: 10px 12px; font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  border: 2px solid #3d6b4f; border-radius: 8px;
+  background: #1b3a2d; color: #f0ece2;
+  outline: none; margin-bottom: 8px;
+  resize: vertical; min-height: 60px;
+}
+.board-posts { margin-bottom: 16px; }
+.board-post-item {
+  background: #244535; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 8px;
+}
+.board-post-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 6px;
+}
+.board-post-name {
+  font-size: 14px; font-weight: 700; color: #d4af37;
+}
+.board-post-date {
+  font-size: 11px; color: #8faa8b;
+}
+.board-post-body {
+  font-size: 14px; line-height: 1.7; color: #f0ece2;
+  word-break: break-word;
+}
+.board-empty {
+  text-align: center; color: #8faa8b; padding: 40px 0;
+  font-size: 14px;
+}
+
 /* ========== アニメーション ========== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
