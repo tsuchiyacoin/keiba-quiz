@@ -314,7 +314,10 @@
       <!-- CSVアップロード -->
       <div class="import-section">
         <h4>📄 CSVファイルからアップロード</h4>
-        <p>CSV形式: 問題文, 選択肢A, 選択肢B, 選択肢C, 選択肢D, 正解(A/B/C/D), 解説</p>
+        <p>CSV形式: 問題文, 選択肢A, 選択肢B, 選択肢C, 選択肢D, 正解(A/B/C/D), 解説, ジャンル, 難易度<br>
+          ジャンル: general/g1/bloodline/jockey/history<br>
+          難易度: beginner/intermediate/advanced<br>
+          ※ジャンル・難易度は省略可（省略時: general / intermediate）</p>
         <input type="file" id="csv-file" accept=".csv,.txt" onchange="handleCsvUpload(event)">
         <div class="import-mode-toggle">
           <label><input type="radio" name="csv-mode" value="add" checked> 既存に追加</label>
@@ -329,7 +332,7 @@
         <p>
           スプレッドシートの共有設定を「リンクを知っている全員」にして、<br>
           ファイル → 共有 → ウェブに公開 → CSV形式で公開してURLを貼り付け<br>
-          ※列の順番: 問題文, 選択肢A, 選択肢B, 選択肢C, 選択肢D, 正解(A/B/C/D), 解説
+          ※列の順番: 問題文, 選択肢A, 選択肢B, 選択肢C, 選択肢D, 正解(A/B/C/D), 解説, ジャンル, 難易度
         </p>
         <input type="text" id="sheet-url" placeholder="公開CSV URL を貼り付け">
         <div class="import-mode-toggle">
@@ -387,6 +390,24 @@
       <div class="form-group">
         <label>解説</label>
         <textarea id="f-explanation" placeholder="解説を入力（任意）"></textarea>
+      </div>
+      <div class="form-group">
+        <label>ジャンル</label>
+        <select id="f-genre" style="width:100%;padding:11px;font-size:14px;font-family:'Noto Sans JP',sans-serif;border:2px solid #333;border-radius:8px;background:#222;color:#eee;">
+          <option value="general">総合</option>
+          <option value="g1">G1レース</option>
+          <option value="bloodline">血統</option>
+          <option value="jockey">騎手</option>
+          <option value="history">歴史</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>難易度</label>
+        <select id="f-difficulty" style="width:100%;padding:11px;font-size:14px;font-family:'Noto Sans JP',sans-serif;border:2px solid #333;border-radius:8px;background:#222;color:#eee;">
+          <option value="beginner">初級</option>
+          <option value="intermediate" selected>中級</option>
+          <option value="advanced">上級</option>
+        </select>
       </div>
       <div class="form-actions">
         <button class="btn btn-gold" onclick="saveQuestion()">保存</button>
@@ -462,23 +483,28 @@
         return;
       }
 
-      questions.forEach((q, i) => {
-        const labels = ['A', 'B', 'C', 'D'];
-        const choicesHtml = q.choices.map((c, ci) =>
-          `<span class="${ci === q.answer ? 'correct-choice' : ''}">${labels[ci]}. ${esc(c)}</span>`
-        ).join('&nbsp;&nbsp;');
+      var genreLabels = {general:'総合',g1:'G1レース',bloodline:'血統',jockey:'騎手',history:'歴史'};
+      var diffLabels = {beginner:'初級',intermediate:'中級',advanced:'上級'};
 
-        const card = document.createElement('div');
+      questions.forEach(function(q, i) {
+        var labels = ['A', 'B', 'C', 'D'];
+        var choicesHtml = q.choices.map(function(c, ci) {
+          return '<span class="' + (ci === q.answer ? 'correct-choice' : '') + '">' + labels[ci] + '. ' + esc(c) + '</span>';
+        }).join('&nbsp;&nbsp;');
+
+        var gLabel = genreLabels[q.genre] || '総合';
+        var dLabel = diffLabels[q.difficulty] || '中級';
+
+        var card = document.createElement('div');
         card.className = 'question-card';
-        card.innerHTML = `
-          <div class="q-num">Q${i + 1}</div>
-          <div class="q-text">${esc(q.question)}</div>
-          <div class="q-choices">${choicesHtml}</div>
-          <div class="q-actions">
-            <button class="btn btn-blue btn-sm" onclick="openEditForm(${i})">編集</button>
-            <button class="btn btn-red btn-sm" onclick="deleteQuestion(${i})">削除</button>
-          </div>
-        `;
+        card.innerHTML =
+          '<div class="q-num">Q' + (i + 1) + ' <span style="color:#d4af37;font-size:11px;margin-left:8px;">' + gLabel + '</span> <span style="color:#888;font-size:11px;">' + dLabel + '</span></div>' +
+          '<div class="q-text">' + esc(q.question) + '</div>' +
+          '<div class="q-choices">' + choicesHtml + '</div>' +
+          '<div class="q-actions">' +
+            '<button class="btn btn-blue btn-sm" onclick="openEditForm(' + i + ')">編集</button>' +
+            '<button class="btn btn-red btn-sm" onclick="deleteQuestion(' + i + ')">削除</button>' +
+          '</div>';
         listEl.appendChild(card);
       });
     }
@@ -493,12 +519,14 @@
       document.getElementById('f-choice2').value = '';
       document.getElementById('f-choice3').value = '';
       document.getElementById('f-explanation').value = '';
+      document.getElementById('f-genre').value = 'general';
+      document.getElementById('f-difficulty').value = 'intermediate';
       document.querySelector('input[name="f-answer"][value="0"]').checked = true;
       document.getElementById('edit-overlay').classList.remove('hidden');
     }
 
     function openEditForm(idx) {
-      const q = getQuestions()[idx];
+      var q = getQuestions()[idx];
       document.getElementById('form-title').textContent = '問題を編集';
       document.getElementById('edit-index').value = idx;
       document.getElementById('f-question').value = q.question;
@@ -507,7 +535,9 @@
       document.getElementById('f-choice2').value = q.choices[2];
       document.getElementById('f-choice3').value = q.choices[3];
       document.getElementById('f-explanation').value = q.explanation || '';
-      document.querySelector(`input[name="f-answer"][value="${q.answer}"]`).checked = true;
+      document.getElementById('f-genre').value = q.genre || 'general';
+      document.getElementById('f-difficulty').value = q.difficulty || 'intermediate';
+      document.querySelector('input[name="f-answer"][value="' + q.answer + '"]').checked = true;
       document.getElementById('edit-overlay').classList.remove('hidden');
     }
 
@@ -532,8 +562,11 @@
         return;
       }
 
+      var genre = document.getElementById('f-genre').value;
+      var difficulty = document.getElementById('f-difficulty').value;
+
       const questions = getQuestions();
-      const newQ = { question, choices, answer, explanation };
+      const newQ = { question, choices, answer, explanation, genre: genre, difficulty: difficulty };
 
       if (idx === -1) {
         questions.push(newQ);
@@ -620,11 +653,20 @@
           continue;
         }
 
+        var validGenres = ['general','g1','bloodline','jockey','history'];
+        var validDiffs = ['beginner','intermediate','advanced'];
+        var genre = (cols[7] || '').trim().toLowerCase();
+        var difficulty = (cols[8] || '').trim().toLowerCase();
+        if (validGenres.indexOf(genre) < 0) genre = 'general';
+        if (validDiffs.indexOf(difficulty) < 0) difficulty = 'intermediate';
+
         questions.push({
           question,
           choices,
           answer,
-          explanation: cols[6] || ''
+          explanation: cols[6] || '',
+          genre: genre,
+          difficulty: difficulty
         });
       }
       return { questions, errors };
@@ -730,13 +772,15 @@
     function exportCsv() {
       const questions = getQuestions();
       const labels = ['A', 'B', 'C', 'D'];
-      const header = '問題文,選択肢A,選択肢B,選択肢C,選択肢D,正解,解説';
+      const header = '問題文,選択肢A,選択肢B,選択肢C,選択肢D,正解,解説,ジャンル,難易度';
       const rows = questions.map(q => {
         const cols = [
           q.question,
           ...q.choices,
           labels[q.answer],
-          q.explanation || ''
+          q.explanation || '',
+          q.genre || 'general',
+          q.difficulty || 'intermediate'
         ];
         return cols.map(c => '"' + c.replace(/"/g, '""') + '"').join(',');
       });
