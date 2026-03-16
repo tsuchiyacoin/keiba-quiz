@@ -24,12 +24,15 @@ var prevTitleName = '';
 // 称号データ
 // ============================================================
 var TITLES = [
-  { min: 0, name: '見習いファン', icon: '🐴' },
-  { min: 10, name: '競馬ファン', icon: '🏇' },
-  { min: 30, name: '馬券師', icon: '🎫' },
-  { min: 60, name: '競馬通', icon: '🏆' },
-  { min: 100, name: '競馬マスター', icon: '👑' },
-  { min: 200, name: '伝説の予想家', icon: '🔥' },
+  { min: 0, name: '未勝利', icon: '🐴' },
+  { min: 10, name: '1勝クラス', icon: '🏇' },
+  { min: 30, name: '2勝クラス', icon: '🎫' },
+  { min: 60, name: '3勝クラス', icon: '🥉' },
+  { min: 100, name: 'オープン馬', icon: '🏆' },
+  { min: 150, name: '重賞ウィナー', icon: '🎖️' },
+  { min: 200, name: 'G1ホース', icon: '👑' },
+  { min: 300, name: '年度代表馬', icon: '🔥' },
+  { min: 500, name: '殿堂馬', icon: '💎' },
 ];
 
 var SPECIAL_TITLES = {
@@ -109,7 +112,7 @@ function getWeekId() {
 }
 
 function seededShuffle(arr, rng) {
-  var a = [...arr];
+  var a = arr.slice();
   for (var i = a.length - 1; i > 0; i--) {
     var j = Math.floor(rng() * (i + 1));
     var tmp2 = a[i]; a[i] = a[j]; a[j] = tmp2;
@@ -389,7 +392,7 @@ function startQuiz() {
   var diff = DIFFICULTY_SETTINGS[settings.difficulty] || DIFFICULTY_SETTINGS.intermediate;
   currentTimeLimit = isHardMode ? Math.min(8, diff.time) : diff.time;
 
-  shuffledQuiz = shuffleArray([...getFilteredQuizData()]);
+  shuffledQuiz = shuffleArray(getFilteredQuizData().slice());
   prevTitleName = getCurrentTitle().name;
 
   document.getElementById('current-score').textContent = '0';
@@ -397,6 +400,7 @@ function startQuiz() {
   document.getElementById('combo-display').style.display = 'none';
   updateModeIndicator();
   showScreen('quiz-screen');
+  playSound('startrace');
   loadQuestion();
 }
 
@@ -566,7 +570,7 @@ function startReview() {
   isReviewMode = true;
   isDailyMode = false;
   isBattleMode = false;
-  shuffledQuiz = shuffleArray([...wrongList]);
+  shuffledQuiz = shuffleArray(wrongList.slice());
   wrongList = [];
   prevTitleName = getCurrentTitle().name;
   currentTimeLimit = 15;
@@ -591,7 +595,7 @@ function startWrongBankReview() {
   isReviewMode = true;
   isDailyMode = false;
   isBattleMode = false;
-  shuffledQuiz = shuffleArray([...bank]);
+  shuffledQuiz = shuffleArray(bank.slice());
   wrongList = [];
   prevTitleName = getCurrentTitle().name;
   currentTimeLimit = 15;
@@ -799,8 +803,10 @@ function selectAnswer(btn, selected, correct, container) {
     recordStat(q, true);
   } else {
     btn.classList.add('wrong');
-    msgEl.textContent = '不正解...';
+    msgEl.textContent = '不正解... -0.5';
     msgEl.className = 'result-msg wrong';
+    score = Math.max(0, score - 0.5);
+    document.getElementById('current-score').textContent = Math.floor(score);
     combo = 0;
     updateComboDisplay();
     wrongList.push(q);
@@ -895,6 +901,7 @@ function nextQuestion() {
 // ============================================================
 function showResult() {
   stopTimer();
+  playSound('fanfare');
   var finalScore = Math.floor(score);
   var accuracy = shuffledQuiz.length > 0 ? correctCount / shuffledQuiz.length : 0;
 
@@ -998,7 +1005,7 @@ function showResult() {
     setTimeout(function() { showGachaAnimation(title); }, xpResult.leveledUp ? 2500 : 800);
   } else {
     setTimeout(function() {
-      document.getElementById('name-modal').style.display = 'flex';
+      showNameModal();
     }, 1200);
   }
 }
@@ -1046,8 +1053,15 @@ function showGachaAnimation(title) {
 function closeGacha() {
   document.getElementById('gacha-overlay').style.display = 'none';
   setTimeout(function() {
-    document.getElementById('name-modal').style.display = 'flex';
+    showNameModal();
   }, 300);
+}
+
+function showNameModal() {
+  var saved = localStorage.getItem('keiba-nickname') || '';
+  var input = document.getElementById('nickname-input');
+  if (input && saved) input.value = saved;
+  document.getElementById('name-modal').style.display = 'flex';
 }
 
 // ============================================================
@@ -1056,12 +1070,14 @@ function closeGacha() {
 function submitScore() {
   var name = document.getElementById('nickname-input').value.trim();
   if (!name) return;
+  localStorage.setItem('keiba-nickname', name);
 
   var title = getCurrentTitle();
   var rankings = getRankings();
   rankings.push({
-    name, score: Math.floor(score), total: shuffledQuiz.length,
+    name: name, score: Math.floor(score), total: shuffledQuiz.length,
     combo: maxCombo, title: title.icon,
+    accuracy: shuffledQuiz.length > 0 ? Math.round(correctCount / shuffledQuiz.length * 100) : 0,
     date: new Date().toLocaleDateString('ja-JP'),
   });
   rankings.sort(function(a, b) { return b.score - a.score; });
@@ -1092,7 +1108,7 @@ function saveWeeklyScore(sc) {
   var name = localStorage.getItem('keiba-last-name') || '';
   if (name) {
     data.entries.push({
-      name, score: sc, date: new Date().toLocaleDateString('ja-JP'),
+      name: name, score: sc, date: new Date().toLocaleDateString('ja-JP'),
     });
     data.entries.sort(function(a, b) { return b.score - a.score; });
     data.entries = data.entries.slice(0, 50);
@@ -1155,6 +1171,12 @@ function renderRanking() {
       totalSpan.className = 'ranking-total';
       totalSpan.textContent = '/' + r.total;
       scoreDiv.appendChild(totalSpan);
+    }
+    if (r.accuracy !== undefined) {
+      var accSpan = document.createElement('span');
+      accSpan.className = 'ranking-accuracy';
+      accSpan.textContent = ' ' + r.accuracy + '%';
+      scoreDiv.appendChild(accSpan);
     }
 
     item.appendChild(numDiv);
@@ -1674,6 +1696,11 @@ function openThread(threadId, data) {
     headerEl.appendChild(body);
     headerEl.appendChild(meta);
   }
+
+  // ニックネーム自動入力
+  var replyNameEl = document.getElementById('reply-name');
+  var savedNick = localStorage.getItem('keiba-nickname') || '';
+  if (replyNameEl && savedNick) replyNameEl.value = savedNick;
 
   // アンカープレビューリセット
   clearAnchor();

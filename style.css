@@ -455,6 +455,7 @@ body {
 .ranking-name { flex: 1; font-weight: 700; font-size: 14px; }
 .ranking-score { font-weight: 900; font-size: 17px; color: #d4af37; }
 .ranking-total { font-size: 12px; color: #8faa8b; font-weight: 400; }
+.ranking-accuracy { font-size: 11px; color: #b8d4b4; font-weight: 400; margin-left: 4px; }
 
 /* ========== 成績画面 ========== */
 .stats-container {
